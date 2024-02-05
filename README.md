@@ -38,7 +38,7 @@ install.packages("shiny")
 To run iMGDAVis by the following commands in R:
 ```
 library(shiny)
-shiny::runGitHub("iMGDAVis ","GudaLab")
+shiny::runGitHub("iMGDAVis","GudaLab")
 ```
 Or 
 Alternatively, download the source code from GitHub and run the following command in the R session using RStudio:
