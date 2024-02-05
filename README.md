@@ -26,11 +26,11 @@ Download the iMGDAVis application locally from the GitHub page (https://github.c
 •	Shiny (≥ 1.7.5)
 
 Start an R session using RStudio and run the following commands to install the shiny package:
-if Bioconductor version is less than 3.18. Bioconductor could be updated by :
+if Bioconductor version is less than 3.17. Bioconductor could be updated by :
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install(version = "3.18")
+BiocManager::install(version = "3.17")
 ```
 ```
 install.packages("shiny")
