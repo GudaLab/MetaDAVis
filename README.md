@@ -9,13 +9,13 @@ interactive Metagenome Data Analysis and Visualization (iMGDAVis) application an
 6.	Differential abundance (Two and multiple groups)
 
 ## Installation
-In this tutorial, we will go through the installation and usage of each functional module using the example dataset. The iMGDAVis is publicly available at (). The example dataset is provided on the GitHub page ().
+In this tutorial, we will go through the installation and usage of each functional module using the example dataset. The iMGDAVis is publicly available at (https://github.com/GudaLab/iMGDAVis). The example dataset is provided on the GitHub page (https://github.com/GudaLab/iMGDAVis/tree/main/www/example_data).
 
 How to start iMGDAVis locally
 
-Download the iMGDAVis application locally from the GitHub page ().
+Download the iMGDAVis application locally from the GitHub page (https://github.com/GudaLab/iMGDAVis).
 
-Requirement:
+### Requirement:
 
 •	R (≥ 4.3.1), available at (https://www.r-project.org/)
 
@@ -25,9 +25,13 @@ Requirement:
 
 •	Shiny (≥ 1.7.5)
 
-This Application was tested in Linux (Red Hat) and Windows 10
-
 Start an R session using RStudio and run the following commands to install the shiny package:
+if Bioconductor version is less than 3.18. Bioconductor could be updated by :
+```
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.18")
+```
 ```
 install.packages("shiny")
 ```
@@ -44,3 +48,6 @@ runApp('/path/to/the/iMGDAVis-master', launch.browser=TRUE)
 ```
 ## Usage
 Tutorial for iMDGAVis https://github.com/GudaLab/iMGDAVis/blob/main/www/manual/iMDGAVis_manual.docx
+
+## Tested
+This Application was tested in Linux (Red Hat) and Windows 10
