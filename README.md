@@ -8,6 +8,9 @@ interactive Metagenome Data Analysis and Visualization (iMGDAVis) application an
 5.	Heatmap
 6.	Differential abundance (Two and multiple groups)
 
+## use iMGDAViz online
+iMGDAViz is deployed at: https://www.gudalab-rtools.net/iMGDAVis
+
 ## Installation
 In this tutorial, we will go through the installation and usage of each functional module using the example dataset. The iMGDAVis is publicly available at (https://github.com/GudaLab/iMGDAVis). The example dataset is provided on the GitHub page (https://github.com/GudaLab/iMGDAVis/tree/main/www/example_data).
 
