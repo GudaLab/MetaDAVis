@@ -24,7 +24,7 @@ Download the iMGDAVis application locally from the GitHub page (https://github.c
 
 •	RStudio (≥ 2023.09.0) available at (https://posit.co/download/rstudio-desktop/) 
 
-•	Bioconductor (3.18) and 
+•	Bioconductor (≥ 3.17) and 
 
 •	Shiny (≥ 1.7.5)
 
@@ -33,7 +33,6 @@ if Bioconductor version is less than 3.17. Bioconductor could be updated by :
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install(version = "3.17")
 ```
 ```
 install.packages("shiny")
