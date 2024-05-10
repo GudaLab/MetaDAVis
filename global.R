@@ -1,5 +1,5 @@
 ## Check packages  and install##
-if (!require('shiny')) install.packages("shiny")
+if (!require('shiny')) install.packages("shiny", dependencies = TRUE)
 if (!require('DT')) install.packages("DT")
 if (!require('shinythemes')) install.packages("shinythemes")
 if (!require('shinyFiles')) install.packages("shinyFiles")
