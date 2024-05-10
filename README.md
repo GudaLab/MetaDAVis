@@ -8,7 +8,7 @@ interactive Metagenome Data Analysis and Visualization (iMGDAVis) application an
 5.	Heatmap
 6.	Differential abundance (Two and multiple groups)
 
-## use iMGDAViz online
+## use iMGDAVis online
 iMGDAViz is deployed at: https://www.gudalab-rtools.net/iMGDAVis
 
 ## Installation
