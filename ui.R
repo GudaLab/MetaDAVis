@@ -62,11 +62,11 @@ shinyUI(
           </ul>
         <p>*It provides publication quality plots in seven formats: JPG, TIFF, PDF, SVG, BMP, EPS, and PS and summary tables (.csv format) to visualize and download.</p>
         <hr>
-        <h3> use iMGDAViz online</h3>
-        <p>iMGDAViz is deployed at: <a href='https://www.gudalab-rtools.net/iMGDAVis'>https://www.gudalab-rtools.net/iMGDAVis</a></p>
+        <h3> use iMGDAVis online</h3>
+        <p>iMGDAVis is deployed at: <a href='https://www.gudalab-rtools.net/iMGDAVis'>https://www.gudalab-rtools.net/iMGDAVis</a></p>
         <hr>
-        <h3> Launch iMGDAViz using R and GitHub</h3>
-        <p> iMGDAViz were deposited under the GitHub repository: <br>
+        <h3> Launch iMGDAVis using R and GitHub</h3>
+        <p> iMGDAVis were deposited under the GitHub repository: <br>
         Before running the app, the user must have R (>= 4.3.1), RStudio (>= 2023.09.0), Bioconductor (>= 3.17) and Shiny (>= 1.7.5) (Tested with this version).<br>
          If users use an older R version, they may encounter errors in installing packages, So the users are recommended to update their R version first.<br>
          Once the user opens the R in the command line or Rstudio, need to run the following command in R to install the shiny package.<br><br></p>
@@ -76,7 +76,7 @@ library(shiny)</pre>
           <hr>
           <h3>Start the app</h3>
           Start the R session using RStudio and run these lines:<br><br>
-<pre>shiny::runGitHub('iMGDAViz','GudaLab')</pre>
+<pre>shiny::runGitHub('iMGDAVis','GudaLab')</pre>
 or
 Alternatively, download the source code from GitHub and run the following command in the R session using RStudio:
 <pre>
