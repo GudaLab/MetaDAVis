@@ -21,13 +21,13 @@ shinyUI(
     theme = shinytheme("cerulean"),
     "",
     tabPanel(
-      "iMGDAVis",
+      "MetaDAVis",
       mainPanel(
-        h1("iMGDAVis",align = "center"),
+        h1("MetaDAVis",align = "center"),
         hr(),
         h3("Introduction"),
         hr(),
-        p(strong("iMGDAVis"), " (interactive Metagenome Data Analysis and Visualization) is a browser-based and user-friendly R Shiny application for researchers without programming proficiency to analyze and visualize metagenomics results from kingdom to species level. It comprises six functional analyses."),
+        p(strong("MetaDAVis"), " (interactive Metagenome Data Analysis and Visualization) is a browser-based and user-friendly R Shiny application for researchers without programming proficiency to analyze and visualize metagenomics results from kingdom to species level. It comprises six functional analyses."),
         
         HTML("<B>The package includes the following:</B><br>
         <ul>
@@ -62,11 +62,11 @@ shinyUI(
           </ul>
         <p>*It provides publication quality plots in seven formats: JPG, TIFF, PDF, SVG, BMP, EPS, and PS and summary tables (.csv format) to visualize and download.</p>
         <hr>
-        <h3> use iMGDAVis online</h3>
-        <p>iMGDAVis is deployed at: <a href='https://www.gudalab-rtools.net/iMGDAVis'>https://www.gudalab-rtools.net/iMGDAVis</a></p>
+        <h3> use MetaDAVis online</h3>
+        <p>MetaDAVis is deployed at: <a href='https://www.gudalab-rtools.net/MetaDAVis'>https://www.gudalab-rtools.net/MetaDAVis</a></p>
         <hr>
-        <h3> Launch iMGDAVis using R and GitHub</h3>
-        <p> iMGDAVis were deposited under the GitHub repository: <br>
+        <h3> Launch MetaDAVis using R and GitHub</h3>
+        <p> MetaDAVis were deposited under the GitHub repository: <br>
         Before running the app, the user must have R (>= 4.3.1), RStudio (>= 2023.09.0), Bioconductor (>= 3.17) and Shiny (>= 1.7.5) (Tested with this version).<br>
          If users use an older R version, they may encounter errors in installing packages, So the users are recommended to update their R version first.<br>
          Once the user opens the R in the command line or Rstudio, need to run the following command in R to install the shiny package.<br><br></p>
@@ -76,14 +76,14 @@ library(shiny)</pre>
           <hr>
           <h3>Start the app</h3>
           Start the R session using RStudio and run these lines:<br><br>
-<pre>shiny::runGitHub('iMGDAVis','GudaLab')</pre>
+<pre>shiny::runGitHub('MetaDAVis','GudaLab')</pre>
 or
 Alternatively, download the source code from GitHub and run the following command in the R session using RStudio:
 <pre>
 library(shiny)
-runApp('/path/to/the/iMGDAVis-master', launch.browser=TRUE)</pre>
+runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
 <hr>
-<h3>Help manual for the usage of iMGDAVis <a href='manual/iMDGAVis_manual.docx', target='_blank'>[Download]</a></h3>
+<h3>Help manual for the usage of MetaDAVis <a href='manual/MetaDAVis_manual.docx', target='_blank'>[Download]</a></h3>
 <hr>
 <h3> Developed and maintained by</h3>
 <p>This application was created by Sankarasubramanian Jagdesan and Babu Guda.  We share the passion about developing an user-friendly tool for all biologists, especially those who do not have access to bioinformaticians or programming efficency.
