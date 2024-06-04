@@ -1,6 +1,6 @@
-# iMGDAVis
+# MetaDAVis
 ## Introduction
-interactive Metagenome Data Analysis and Visualization (iMGDAVis) application analyzes 16S and whole metagenome sequence results at various levels (kingdom to species). It is a browser-based and user-friendly R Shiny application for researchers to analyze and visualize without programming proficiency. It comprises six functional analyses.
+interactive Metagenome Data Analysis and Visualization (MetaDAVis) application analyzes 16S and whole metagenome sequence results at various levels (kingdom to species). It is a browser-based and user-friendly R Shiny application for researchers to analyze and visualize without programming proficiency. It comprises six functional analyses.
 1.	Data Summary and Distribution
 2.	Diversity analysis
 3.	Dimension reduction
@@ -8,15 +8,15 @@ interactive Metagenome Data Analysis and Visualization (iMGDAVis) application an
 5.	Heatmap
 6.	Differential abundance (Two and multiple groups)
 
-## use iMGDAVis online
-iMGDAViz is deployed at: https://www.gudalab-rtools.net/iMGDAVis
+## use MetaDAVis online
+iMGDAViz is deployed at: https://www.gudalab-rtools.net/MetaDAVis
 
 ## Installation
-In this tutorial, we will go through the installation and usage of each functional module using the example dataset. The iMGDAVis is publicly available at (https://github.com/GudaLab/iMGDAVis). The example dataset is provided on the GitHub page (https://github.com/GudaLab/iMGDAVis/tree/main/www/example_data).
+In this tutorial, we will go through the installation and usage of each functional module using the example dataset. The MetaDAVis is publicly available at (https://github.com/GudaLab/MetaDAVis). The example dataset is provided on the GitHub page (https://github.com/GudaLab/MetaDAVis/tree/main/www/example_data).
 
-How to start iMGDAVis locally
+How to start MetaDAVis locally
 
-Download the iMGDAVis application locally from the GitHub page (https://github.com/GudaLab/iMGDAVis).
+Download the MetaDAVis application locally from the GitHub page (https://github.com/GudaLab/MetaDAVis).
 
 ### Requirement:
 
@@ -37,19 +37,19 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 ```
 install.packages("shiny")
 ```
-To run iMGDAVis by the following commands in R:
+To run MetaDAVis by the following commands in R:
 ```
 library(shiny)
-shiny::runGitHub("iMGDAVis","GudaLab")
+shiny::runGitHub("MetaDAVis","GudaLab")
 ```
 Or 
 Alternatively, download the source code from GitHub and run the following command in the R session using RStudio:
 ```
 library(shiny)
-runApp('/path/to/the/iMGDAVis-master', launch.browser=TRUE)
+runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)
 ```
 ## Usage
-Tutorial for iMDGAVis https://github.com/GudaLab/iMGDAVis/blob/main/www/manual/iMDGAVis_manual.docx
+Tutorial for MetaDAVis https://github.com/GudaLab/MetaDAVis/blob/main/www/manual/MetaDAVis_manual.docx
 
 ## Tested
 This Application was tested in Linux (Red Hat) and Windows 10
