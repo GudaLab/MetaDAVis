@@ -49,10 +49,10 @@ server <- function(input, output, session) {
   output$text_metadata<- renderText({
     paste(dataInput_RA_level()[[2]])
   })
-  output$taxonomy_table <- renderDataTable((dataInput_RA_level()[[4]]))
-  output$metadata_table <- renderDataTable((dataInput_RA_level()[[7]]))
-  output$conditions_table <- renderDataTable((dataInput_RA_level()[[10]]))
-  output$count_table <- renderDataTable((dataInput_RA_level()[[11]]))
+  output$taxonomy_table <- renderDataTable(DT::datatable(dataInput_RA_level()[[4]],options = list(pageLength = 15,scrollX = TRUE)))
+  output$metadata_table <- renderDataTable(DT::datatable(dataInput_RA_level()[[7]],options = list(pageLength = 15,scrollX = TRUE)))
+  output$conditions_table <- renderDataTable(DT::datatable(dataInput_RA_level()[[10]],options = list(pageLength = 15,scrollX = TRUE)))
+  output$count_table <- renderDataTable(DT::datatable(dataInput_RA_level()[[11]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_taxonomy_table <- downloadHandler(
     filename = function() { 
@@ -184,7 +184,7 @@ server <- function(input, output, session) {
     alpha_diversity(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], index_method = input$select_alpha, plot_method = input$select_plot, pvalue=input$select_alpha_pvalue)
   })
   
-  output$alpha_table <- renderDataTable((data_Alpha_Div()[[1]]))
+  output$alpha_table <- renderDataTable(DT::datatable(data_Alpha_Div()[[1]],options = list(pageLength = 15,scrollX = TRUE)))
   
 
   output$download_result_alpha <- downloadHandler(
@@ -236,7 +236,7 @@ server <- function(input, output, session) {
     beta_diversity(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], index_method = input$select_beta, plot_method = input$select_method)
   })
 
-  output$beta_table <- renderDataTable((data_beta_Div()[[1]]))
+  output$beta_table <- renderDataTable(DT::datatable(data_beta_Div()[[1]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_beta <- downloadHandler(
     filename = function() { 
@@ -287,7 +287,7 @@ server <- function(input, output, session) {
     pca_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], pca_label1 = input$select_pca_label, pca_label_size = input$select_pca_label_size, pca_frame = input$select_pca_frame)
   })
   
- output$pca_table <- renderDataTable((data_pca_table())[[1]])
+ output$pca_table <- renderDataTable(DT::datatable(data_pca_table()[[1]],options = list(pageLength = 15,scrollX = TRUE)))
  
  output$download_result_pca <- downloadHandler(
    filename = function() { 
@@ -336,7 +336,7 @@ server <- function(input, output, session) {
     pca3d_plot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]])
   })
   
-  output$pca3d_table <- renderDataTable((data_pca3d_table())[[2]])
+  output$pca3d_table <- renderDataTable(DT::datatable(data_pca3d_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_pca3d <- downloadHandler(
     filename = function() { 
@@ -368,7 +368,7 @@ server <- function(input, output, session) {
     tsne_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], method = input$select_tsne_method, dimension = input$select_tsne_dimension)
   })
   
-  output$tsne_table <- renderDataTable((data_tsne_table())[[2]])
+  output$tsne_table <- renderDataTable(DT::datatable(data_tsne_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_tsne <- downloadHandler(
     filename = function() { 
@@ -411,7 +411,7 @@ server <- function(input, output, session) {
     umap_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], method = input$select_umap_method, kvalue = input$select_umap_kvalue)
   })
   
-  output$umap_table <- renderDataTable((data_umap_table())[[2]])
+  output$umap_table <- renderDataTable(DT::datatable(data_umap_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_umap <- downloadHandler(
     filename = function() { 
@@ -421,7 +421,7 @@ server <- function(input, output, session) {
     }
   )
   
-  output$umap_table1 <- renderDataTable((data_umap_table())[[3]])
+  output$umap_table1 <- renderDataTable(DT::datatable(data_umap_table()[[3]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_umap1 <- downloadHandler(
     filename = function() { 
@@ -461,7 +461,7 @@ server <- function(input, output, session) {
     taxa_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], method = input$select_taxa_based_correlation_method, labe_size =input$select_taxa_based_correlation_label_size)
   })
   
-  output$taxa_based_correlation_table <- renderDataTable((data_taxa_based_correlation_table())[[2]])
+  output$taxa_based_correlation_table <- renderDataTable(DT::datatable(data_taxa_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_taxa_based_correlation <- downloadHandler(
     filename = function() { 
@@ -500,7 +500,7 @@ server <- function(input, output, session) {
     samples_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], method = input$select_samples_based_correlation_method, labe_size =input$select_samples_based_correlation_label_size)
   })
   
-  output$samples_based_correlation_table <- renderDataTable((data_samples_based_correlation_table())[[2]])
+  output$samples_based_correlation_table <- renderDataTable(DT::datatable(data_samples_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_samples_based_correlation <- downloadHandler(
     filename = function() { 
@@ -566,7 +566,7 @@ server <- function(input, output, session) {
     paste(data_wilcoxtest()[[1]])
   })
   
-  output$wilcoxtest_table <- renderDataTable((data_wilcoxtest()[[2]]))
+  output$wilcoxtest_table <- renderDataTable(DT::datatable((data_wilcoxtest()[[2]]),options = list(pageLength = 15,scrollX = TRUE)))
   
   output$download_result_wilcoxtest_1 <- downloadHandler(
     filename = function() { 
@@ -665,7 +665,7 @@ server <- function(input, output, session) {
     paste(data_ttest()[[1]])
   })
   
-  output$ttest_table <- renderDataTable((data_ttest()[[2]]))
+  output$ttest_table <- renderDataTable(DT::datatable((data_ttest()[[2]]), options = list( pageLength = 15, scrollX = TRUE)))
   
   output$download_result_ttest_1 <- downloadHandler(
     filename = function() { 
@@ -762,7 +762,7 @@ server <- function(input, output, session) {
     paste(data_metagenomeseq()[[1]])
   })
   
-  output$metagenomeseq_table <- renderDataTable((data_metagenomeseq()[[2]]))
+  output$metagenomeseq_table <- renderDataTable(DT::datatable((data_metagenomeseq()[[2]]), options = list( pageLength = 15, scrollX = TRUE)))
   
   output$download_result_metagenomeseq_1 <- downloadHandler(
     filename = function() { 
@@ -853,7 +853,7 @@ server <- function(input, output, session) {
     paste(data_deseq2()[[1]])
   })
  
-  output$deseq2_table <- renderDataTable((data_deseq2()[[2]]))
+  output$deseq2_table <- renderDataTable(DT::datatable((data_deseq2()[[2]]), options = list( pageLength = 15, scrollX = TRUE)))
   
   output$download_result_deseq2_1 <- downloadHandler(
     filename = function() { 
@@ -952,7 +952,7 @@ server <- function(input, output, session) {
     paste(data_limma()[[1]])
   })
   
-  output$limma_table <- renderDataTable((data_limma()[[2]]))
+  output$limma_table <- renderDataTable(DT::datatable((data_limma()[[2]]), options = list( pageLength = 15, scrollX = TRUE)))
   
   output$download_result_limma_1 <- downloadHandler(
     filename = function() { 
@@ -1046,7 +1046,7 @@ server <- function(input, output, session) {
     paste(data_edger()[[1]])
   })
   
-  output$edger_table <- renderDataTable((data_edger()[[2]]))
+  output$edger_table <- renderDataTable(DT::datatable((data_edger()[[2]]), options = list( pageLength = 15, scrollX = TRUE)))
   
   output$download_result_edger_1 <- downloadHandler(
     filename = function() { 
@@ -1110,7 +1110,7 @@ server <- function(input, output, session) {
     paste(data_kruskal_wallis_test()[[1]])
   })
   
-  output$kruskal_wallis_test_table <- renderDataTable((data_kruskal_wallis_test()[[2]]))
+  output$kruskal_wallis_test_table <- renderDataTable(DT::datatable((data_kruskal_wallis_test()[[2]]), options = list( pageLength = 15, scrollX = TRUE)))
   
   output$download_result_kruskal_wallis_test_1 <- downloadHandler(
     filename = function() { 
@@ -1181,7 +1181,7 @@ server <- function(input, output, session) {
     paste(data_anova()[[1]])
   })
   
-  output$anova_table <- renderDataTable((data_anova()[[2]]))
+  output$anova_table <- renderDataTable(DT::datatable((data_anova()[[2]]), options = list( pageLength = 15, scrollX = TRUE)))
   
   output$download_result_anova_1 <- downloadHandler(
     filename = function() { 
