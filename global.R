@@ -18,6 +18,7 @@ if (!require('devtools')) install.packages("devtools")
 if (!require('patchwork')) install.packages("patchwork")
 if (!require('GGally')) install.packages("GGally")
 if (!require('plotly'))install.packages("plotly")
+if (!require("shinycssloaders")) install.packages("shinycssloaders")
 if (!require('BiocManager')) install.packages("BiocManager", update = FALSE)
 if (!require('phyloseq')) BiocManager::install("phyloseq", update = FALSE)
 if (!require('microbiome')) BiocManager::install("microbiome", update = FALSE)
@@ -34,9 +35,3 @@ if (!require('microbiomeutilities')) BiocManager::install("microsud/microbiomeut
 
 
 source("scripts/data_input.R")
-#if (!require('fossil')) install.packages("fossil")
-#if (!require('RColorBrewer')) install.packages("RColorBrewer")
-#if (!require('plotly')) install.packages("plotly")
-#if (!require('tidyverse')) install.packages("tidyverse")
-#if (!require('plyr')) install.packages("plyr")
-#if (!require('data.table')) install.packages("data.table")

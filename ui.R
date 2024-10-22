@@ -1,14 +1,3 @@
-## This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-#tags$style(type="text/css",
-#           ".shiny-output-error { visibility: hidden; }",
-#           ".shiny-output-error:before { visibility: hidden; }"
-#)
 library(shiny)
 library(shinythemes)
 library(shinyFiles)
@@ -67,7 +56,7 @@ shinyUI(
         <hr>
         <h3> Launch MetaDAVis using R and GitHub</h3>
         <p> MetaDAVis were deposited under the GitHub repository: <br>
-        Before running the app, the user must have R (>= 4.3.1), RStudio (>= 2023.09.0), Bioconductor (>= 3.17) and Shiny (>= 1.7.5) (Tested with this version).<br>
+        Before running the app, the user must have R (>= 4.4.1), RStudio (>= 2024.09.0), Bioconductor (>= 3.19) and Shiny (>= 1.9.1) (Tested with this version).<br>
          If users use an older R version, they may encounter errors in installing packages, So the users are recommended to update their R version first.<br>
          Once the user opens the R in the command line or Rstudio, need to run the following command in R to install the shiny package.<br><br></p>
           
@@ -83,7 +72,7 @@ Alternatively, download the source code from GitHub and run the following comman
 library(shiny)
 runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
 <hr>
-<h3>Help manual for the usage of MetaDAVis <a href='manual/MetaDAVis_manual.docx', target='_blank'>[Download]</a></h3>
+<h3>Help manual for the usage of MetaDAVis <a href='manual/MetaDAVis_manual.pdf', target='_blank'>[Download]</a></h3>
 <hr>
 <h3> Developed and maintained by</h3>
 <p>This application was created by Sankarasubramanian Jagdesan and Babu Guda.  We share the passion about developing an user-friendly tool for all biologists, especially those who do not have access to bioinformaticians or programming efficency.
@@ -145,33 +134,42 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
          h4("After the data is uploaded and checked, it will be displayed in the table summary below."),
           hr(),
           h4("Number of OTUs"),
-          verbatimTextOutput("text_level"),
+         withSpinner(verbatimTextOutput("text_level")),
           h4("Metadata"),
-          verbatimTextOutput("text_metadata")
+         withSpinner(verbatimTextOutput("text_metadata"))
             ),
           tabPanel(
             "Taxonomy table",
             h4("Display the taxonomy counts for each samples"),
-            dataTableOutput("taxonomy_table"),
+            withSpinner(dataTableOutput("taxonomy_table")),
            downloadButton(outputId = "download_taxonomy_table", label = "Download as csv"),
           ),
             tabPanel(
               "Metadata table",
               h4("Display the metadata file"),
-              dataTableOutput("metadata_table"),
-              downloadButton(outputId = "download_metadata_table", label = "Download as csv"),
-            ),
+              fluidRow(
+                column(
+              withSpinner(dataTableOutput("metadata_table")),
+              downloadButton(outputId = "download_metadata_table", label = "Download as csv"), width = 4),
+          ),
+        ),
           tabPanel(
             "No. of conditions",
             h4("Display the number of condition based on your metadata"),
-            dataTableOutput("conditions_table"),
-            downloadButton(outputId = "download_conditions_table", label = "Download as csv"),
+              fluidRow(
+              column(
+                withSpinner(dataTableOutput("conditions_table")),
+            downloadButton(outputId = "download_conditions_table", label = "Download as csv"), width = 4),
+              ),
           ),
           tabPanel(
             "Counts in samples",
             h4("Display the total number of counts in each samples"),
-            dataTableOutput("count_table"),
-            downloadButton(outputId = "download_count_table", label = "Download as csv"),
+            fluidRow(
+              column(
+                withSpinner(dataTableOutput("count_table")),
+            downloadButton(outputId = "download_count_table", label = "Download as csv"), width = 4),
+            ),
           ),
         ),
       ),
@@ -191,7 +189,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
             actionButton("action_m1_bar_plot_group", "Submit"),
           ),
           mainPanel(
-            plotOutput("bar_plot_group", width = "50%", height = "500px"),
+            withSpinner(plotOutput("bar_plot_group", width = "50%", height = "500px")),
             h4("Relative abundance."),
             fluidRow(
             column(3, numericInput("bar_plot_group_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
@@ -214,7 +212,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
             actionButton("action_m1_bar_plot_individual", "Submit"),
           ),
           mainPanel(
-            plotOutput("bar_plot_individual"),
+            withSpinner(plotOutput("bar_plot_individual")),
             fluidRow(
             column(3, numericInput("bar_plot_individual_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
             column(3, numericInput("bar_plot_individual_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -246,7 +244,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                        tabPanel(
                          "Alpha diversity plot",
                          h3("Boxplot"),
-                         plotOutput("boxplot_Alpha_Div"),
+                         withSpinner(plotOutput("boxplot_Alpha_Div")),
                          br(),
                          br(),
                          br(),
@@ -262,7 +260,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                          "Summary Table",
                          h3("Result - alpha diversity estimates for each metagenome"),
                          hr(),
-                         dataTableOutput("alpha_table"),
+                         withSpinner(dataTableOutput("alpha_table")),
                          downloadButton(outputId = "download_result_alpha", label = "Download as csv"),
                        ),
                      ),
@@ -287,7 +285,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                        tabPanel(
                          "Beta diversity Plot",
                          h3("Beta diversity plot"),
-                         plotOutput("boxplot_Beta_Div"),
+                         withSpinner(plotOutput("boxplot_Beta_Div")),
                          fluidRow(
                          column(3, numericInput("Boxplot_beta_div_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                          column(3, numericInput("Boxplot_beta_div_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -300,7 +298,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                          "Summary Table",
                          h3("Result - distance between all the samples"),
                          hr(),
-                         dataTableOutput("beta_table"),
+                         withSpinner(dataTableOutput("beta_table")),
                          downloadButton(outputId = "download_result_beta", label = "Download as csv"),
                        ),
                    ),
@@ -329,7 +327,7 @@ navbarMenu("Dimension reduction",
                    tabPanel(
                      "PCA 2D Plot",
                      h3("Principal Component Analysis (PCA)"),
-                     plotOutput("plot_pca", width = "70%", height = "500px"),
+                     withSpinner(plotOutput("plot_pca", width = "70%", height = "500px")),
                      fluidRow(
                        column(3, numericInput("pca_plot_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("pca_plot_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -339,8 +337,11 @@ navbarMenu("Dimension reduction",
                    ),
                    tabPanel(
                      "Summary Table",
-                     dataTableOutput("pca_table"),
-                     downloadButton(outputId = "download_result_pca", label = "Download as csv"),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("pca_table")),
+                     downloadButton(outputId = "download_result_pca", label = "Download as csv"), width = 6),
+                     ),
                    ),
                  ),
                ),
@@ -361,13 +362,16 @@ navbarMenu("Dimension reduction",
                    tabPanel(
                      "PCA 3D Plot",
                      h3("Principal Component Analysis (PCA)"),
-                     plotlyOutput("plot_pca3d", height = "700px", width= "800px"),
+                     withSpinner(plotlyOutput("plot_pca3d", height = "700px", width= "800px")),
                   
                    ),
                    tabPanel(
                      "Summary Table",
-                     dataTableOutput("pca3d_table"),
-                     downloadButton(outputId = "download_result_pca3d", label = "Download as csv"),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("pca3d_table")),
+                    downloadButton(outputId = "download_result_pca3d", label = "Download as csv"), width = 6),
+                     ),
                    ),
                  ),
                ),
@@ -390,7 +394,7 @@ navbarMenu("Dimension reduction",
                    tabPanel(
                      "t-SNE Plot",
                      h3("t-distributed Stochastic Neighbor Embedding (t-SNE)"),
-                     plotOutput("plot_tsne", width = "70%", height = "500px"),
+                     withSpinner(plotOutput("plot_tsne", width = "70%", height = "500px")),
                      fluidRow(
                        column(3, numericInput("tsne_plot_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("tsne_plot_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -400,9 +404,12 @@ navbarMenu("Dimension reduction",
                    ),
                    tabPanel(
                      "Summary Table",
-                     dataTableOutput("tsne_table"),
-                     downloadButton(outputId = "download_result_tsne", label = "Download as csv"),
-                   ),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("tsne_table")),
+                     downloadButton(outputId = "download_result_tsne", label = "Download as csv"), width = 6),
+                 ),
+               ),
                  ),
                ),
              ),
@@ -424,7 +431,7 @@ navbarMenu("Dimension reduction",
                    tabPanel(
                      "UMAP Plot",
                      h3("Uniform Manifold Approximation and Projection for Dimension Reduction (UMAP)"),
-                     plotOutput("plot_umap", width = "100%", height = "500px"),
+                     withSpinner(plotOutput("plot_umap", width = "100%", height = "500px")),
                      fluidRow(
                        column(3, numericInput("umap_plot_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("umap_plot_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -434,14 +441,20 @@ navbarMenu("Dimension reduction",
                    ),
                    tabPanel(
                      "Summary Table based on condition",
-                     dataTableOutput("umap_table"),
-                     downloadButton(outputId = "download_result_umap", label = "Download as csv"),
-                   ),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("umap_table")),
+                     downloadButton(outputId = "download_result_umap", label = "Download as csv"), width = 6),
+                 ),
+               ),
                    tabPanel(
                      "Summary Table based on cluster",
-                     dataTableOutput("umap_table1"),
-                     downloadButton(outputId = "download_result_umap1", label = "Download as csv"),
-                   ),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("umap_table1")),
+                     downloadButton(outputId = "download_result_umap1", label = "Download as csv"), width = 6),
+             ),
+           ),
                  ),
                ),
              ),
@@ -465,7 +478,7 @@ navbarMenu(
           type = "tabs",
           tabPanel(
             "Correlation plot",
-        plotOutput("plot_taxa_based_correlation", width = "100%", height = "1000px"),
+            withSpinner(plotOutput("plot_taxa_based_correlation", width = "100%", height = "1000px")),
         h4("Taxa based correlation plot."),
         fluidRow(
           column(3, numericInput("taxa_based_correlation_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
@@ -476,8 +489,11 @@ navbarMenu(
       ),
       tabPanel(
         "Summary Table",
-        dataTableOutput("taxa_based_correlation_table"),
-        downloadButton(outputId = "download_result_taxa_based_correlation", label = "Download as csv"),
+        fluidRow(
+          column(
+            withSpinner(dataTableOutput("taxa_based_correlation_table")),
+        downloadButton(outputId = "download_result_taxa_based_correlation", label = "Download as csv"), width = 8),
+        ),
       ),
      ),
     ),
@@ -498,7 +514,7 @@ navbarMenu(
           type = "tabs",
           tabPanel(
             "Correlation plot",
-            plotOutput("plot_samples_based_correlation", width = "100%", height = "1000px"),
+            withSpinner(plotOutput("plot_samples_based_correlation", width = "100%", height = "1000px")),
             h4("Samples based correlation plot."),
             fluidRow(
               column(3, numericInput("samples_based_correlation_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
@@ -509,9 +525,12 @@ navbarMenu(
           ),
           tabPanel(
             "Summary Table",
-            dataTableOutput("samples_based_correlation_table"),
-            downloadButton(outputId = "download_result_samples_based_correlation", label = "Download as csv"),
-          ),
+            fluidRow(
+              column(
+                withSpinner(dataTableOutput("samples_based_correlation_table")),
+            downloadButton(outputId = "download_result_samples_based_correlation", label = "Download as csv"), width = 8),
+        ),
+      ),
         ),
       ),
     ),
@@ -535,7 +554,7 @@ tabPanel(
       actionButton("action_heatmap", "Submit"),
     ),
     mainPanel(
-      plotOutput("plot_heatmap", width = "100%", height = "800px"),
+      withSpinner(plotOutput("plot_heatmap", width = "100%", height = "800px")),
       h4("Heatmap using relative abundance."),
       fluidRow(
         column(3, numericInput("heatmap_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
@@ -557,8 +576,6 @@ navbarMenu("Differential abundance",
                  selectInput("input_wilcoxtest", label = "Selected input", choices = "No data selected! please load the data first"),
                  selectInput("group1_wilcoxtest", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_wilcoxtest", label = "Select condition2", choices = "Please upload metadata in upload page"),
-                 #textInput("group1_wilcoxtest","Condition1", value = "", width = NULL, placeholder = NULL),
-                 #textInput("group2_wilcoxtest","Condition2", value = "", width = NULL, placeholder = NULL),
                  selectInput("select_wilcoxtest_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("wilcoxtest_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("select_wilcoxtest_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
@@ -571,8 +588,11 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between two groups"),
-                     verbatimTextOutput("text_wilcoxtest_level"),
-                     dataTableOutput("wilcoxtest_table"),
+                     withSpinner(verbatimTextOutput("text_wilcoxtest_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("wilcoxtest_table")), width = 12),
+                 ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -588,7 +608,7 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Plot",
                      h3("Plot"),
-                     plotOutput("boxplot_wilcoxtest", width = "100%", height = "800px"),
+                     withSpinner(plotOutput("boxplot_wilcoxtest", width = "100%", height = "800px")),
                      fluidRow(
                        column(3, numericInput("Boxplot_wilcoxtest_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_wilcoxtest_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -608,8 +628,6 @@ navbarMenu("Differential abundance",
                  selectInput("input_ttest", label = "Selected input", choices = "No data selected! please load the data first"),
                  selectInput("group1_ttest", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_ttest", label = "Select condition2", choices = "Please upload metadata in upload page"),
-                 #textInput("group1_ttest","Condition1", value = "", width = NULL, placeholder = NULL),
-                 #textInput("group2_ttest","Condition2", value = "", width = NULL, placeholder = NULL),
                  selectInput("select_ttest_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("ttest_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("select_ttest_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
@@ -622,8 +640,11 @@ navbarMenu("Differential abundance",
                     tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between two groups"),
-                     verbatimTextOutput("text_ttest_level"),
-                     dataTableOutput("ttest_table"),
+                     withSpinner(verbatimTextOutput("text_ttest_level")),
+                      fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("ttest_table")), width = 12),
+                     ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -639,7 +660,7 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Plot",
                      h3("Plot"),
-                     plotOutput("boxplot_ttest", width = "100%", height = "800px"),
+                     withSpinner(plotOutput("boxplot_ttest", width = "100%", height = "800px")),
                      fluidRow(
                        column(3, numericInput("Boxplot_ttest_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_ttest_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -659,8 +680,6 @@ navbarMenu("Differential abundance",
                  selectInput("input_RA_metagenomeseq", label = "Selected input", choices = "No data selected! please load the data first"),
                  selectInput("group1_metagenomeseq", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_metagenomeseq", label = "Select condition2", choices = "Please upload metadata in upload page"),
-                 #textInput("group1_metagenomeseq","Condition1", value = "", width = NULL, placeholder = NULL),
-                 #textInput("group2_metagenomeseq","Condition2", value = "", width = NULL, placeholder = NULL),
                  selectInput("select_metagenomeseq_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("metagenomeseq_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("select_metagenomeseq_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
@@ -673,8 +692,11 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between two groups"),
-                     verbatimTextOutput("text_metagenomeseq_level"),
-                     dataTableOutput("metagenomeseq_table"),
+                     withSpinner(verbatimTextOutput("text_metagenomeseq_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("metagenomeseq_table")), width = 12),
+                     ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -688,7 +710,7 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Plot",
                      h3("Plot"),
-                     plotOutput("boxplot_metagenomeseq", width = "100%", height = "800px"),
+                     withSpinner(plotOutput("boxplot_metagenomeseq", width = "100%", height = "800px")),
                      fluidRow(
                        column(3, numericInput("Boxplot_metagenomeseq_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_metagenomeseq_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -710,8 +732,6 @@ navbarMenu("Differential abundance",
                  selectInput("input_RA_deseq2", label = "Selected input", choices = "No data selected! please load the data first"),
                  selectInput("group1_deseq2", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_deseq2", label = "Select condition2", choices = "Please upload metadata in upload page"),
-                 #textInput("group1_deseq2","Condition1", value = "", width = NULL, placeholder = NULL),
-                 #textInput("group2_deseq2","Condition2", value = "", width = NULL, placeholder = NULL),
                  selectInput("select_deseq2_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("deseq2_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("select_deseq2_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
@@ -724,8 +744,11 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between two groups"),
-                     verbatimTextOutput("text_deseq2_level"),
-                     dataTableOutput("deseq2_table"),
+                     withSpinner(verbatimTextOutput("text_deseq2_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("deseq2_table")), width = 12),
+                     ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -741,7 +764,7 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Plot",
                      h3("Plot"),
-                     plotOutput("boxplot_deseq2", width = "100%", height = "800px"),
+                     withSpinner(plotOutput("boxplot_deseq2", width = "100%", height = "800px")),
                      fluidRow(
                        column(3, numericInput("Boxplot_deseq2_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_deseq2_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -762,8 +785,6 @@ navbarMenu("Differential abundance",
                  selectInput("input_RA_limma", label = "Selected input", choices = "No data selected! please load the data first"),
                  selectInput("group1_limma", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_limma", label = "Select condition2", choices = "Please upload metadata in upload page"),
-                 #textInput("group1_limma","Condition1", value = "", width = NULL, placeholder = NULL),
-                 #textInput("group2_limma","Condition2", value = "", width = NULL, placeholder = NULL),
                  selectInput("select_limma_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("limma_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("select_limma_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
@@ -776,8 +797,11 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between two groups"),
-                     verbatimTextOutput("text_limma_level"),
-                     dataTableOutput("limma_table"),
+                     withSpinner(verbatimTextOutput("text_limma_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("limma_table")), width = 12),
+                     ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -791,7 +815,7 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Plot",
                      h3("Plot"),
-                     plotOutput("boxplot_limma", width = "100%", height = "800px"),
+                     withSpinner(plotOutput("boxplot_limma", width = "100%", height = "800px")),
                      fluidRow(
                        column(3, numericInput("Boxplot_limma_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_limma_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -812,8 +836,6 @@ navbarMenu("Differential abundance",
                  selectInput("input_RA_edger", label = "Selected input", choices = "No data selected! please load the data first"),
                  selectInput("group1_edger", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_edger", label = "Select condition2", choices = "Please upload metadata in upload page"),
-                 #textInput("group1_edger","Condition1", value = "", width = NULL, placeholder = NULL),
-                 #textInput("group2_edger","Condition2", value = "", width = NULL, placeholder = NULL),
                  selectInput("select_edger_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("edger_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("select_edger_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Heatmap" = 3), selected = 1),
@@ -826,8 +848,11 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between two groups"),
-                     verbatimTextOutput("text_edger_level"),
-                     dataTableOutput("edger_table"),
+                     withSpinner(verbatimTextOutput("text_edger_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("edger_table")), width = 12),
+                     ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -841,7 +866,7 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Plot",
                      h3("Plot"),
-                     plotOutput("boxplot_edger", width = "100%", height = "800px"),
+                     withSpinner(plotOutput("boxplot_edger", width = "100%", height = "800px")),
                      fluidRow(
                        column(3, numericInput("Boxplot_edger_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_edger_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -874,8 +899,11 @@ navbarMenu("Differential abundance",
                   tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between multiple groups"),
-                     verbatimTextOutput("text_kruskal_wallis_test_level"),
-                     dataTableOutput("kruskal_wallis_test_table"),
+                     withSpinner(verbatimTextOutput("text_kruskal_wallis_test_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("kruskal_wallis_test_table")), width = 12),
+                     ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -891,7 +919,7 @@ navbarMenu("Differential abundance",
                   tabPanel(
                     "Plot",
                     h3("Plot"),
-                    plotOutput("boxplot_kruskal_wallis_test", width = "100%", height = "1500px"),
+                    withSpinner(plotOutput("boxplot_kruskal_wallis_test", width = "100%", height = "1500px")),
                     fluidRow(
                       column(3, numericInput("Boxplot_kruskal_wallis_test_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                       column(3, numericInput("Boxplot_kruskal_wallis_test_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -922,8 +950,11 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Summary Table",
                      h3("Result - OTUs that were significantly different between multiple groups"),
-                     verbatimTextOutput("text_anova_level"),
-                     dataTableOutput("anova_table"),
+                     withSpinner(verbatimTextOutput("text_anova_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("anova_table")), width = 12),
+                     ),
                      hr(),
                      fluidRow(
                      column(3, h4("Download significant"),
@@ -939,7 +970,7 @@ navbarMenu("Differential abundance",
                    tabPanel(
                      "Plot",
                      h3("Plot"),
-                     plotOutput("boxplot_anova", width = "100%", height = "1500px"),
+                     withSpinner(plotOutput("boxplot_anova", width = "100%", height = "1500px")),
                      fluidRow(
                        column(3, numericInput("Boxplot_anova_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_anova_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),

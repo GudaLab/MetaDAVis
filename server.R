@@ -3,19 +3,7 @@ source("global.R")
 #options(warn=-1)
 server <- function(input, output, session) {
   
-  ###########################
-  ##  Download sample data ##
-  ###########################  
-  ## *** Download sample data in csv format ***
-  #output$Qiime2_output_level7.csv <- downloadfile("example_data/Qiime2_output_level7.csv")
-  #output$Qiime2_metadata.csv <- downloadfile("example_data/Qiime2_metadata.csv")
-  #output$Megan_WGS_output.tsv <- downloadfile("Megan_WGS_output.tsv")
-  #output$Megan_WGS_metadata.tsv <- R.utils::downloadfile("Megan_WGS_metadata.tsv")
-  #output$Taxa_count_file.tsv <- downloadfile("Taxa_count_file.tsv")
-  #output$Qiime2_metadata_for_Silva.csv <- download.file("example_data/Qiime2_metadata_for_Silva.csv")
 
-  
-  
 ###########################
 ##         Input         ##
 ###########################  
@@ -31,9 +19,7 @@ server <- function(input, output, session) {
     ext1 <- tools::file_ext(input$metadata)
     req(input$metadata)    
     validate(need(((type=="Megan" | type=="check") & (ext1 == "tsv") & (sep1=="\t")) | ((type=="qiime_format") & (ext1 == "csv") & (sep1==",")), "Please select the proper input format and 'Fields separated by' "))
-    
-    #validate(need((ext1 == "csv") & (sep1==",") | (ext1 == "tsv") & (sep1=="\t"), "Please upload a .csv or .tsv file and select the proper menu 'Fields separated by' "))
-    
+
     
     if(is.null(input$file1)|is.null(input$metadata)){
       return(list("Input is missing", "Input is missing", 30, "Input is missing"))
