@@ -20,16 +20,16 @@ Download the MetaDAVis application locally from the GitHub page (https://github.
 
 ### Requirement:
 
-•	R (≥ 4.3.1), available at (https://www.r-project.org/)
+•	R (≥ 4.4.1), available at (https://www.r-project.org/)
 
-•	RStudio (≥ 2023.09.0) available at (https://posit.co/download/rstudio-desktop/) 
+•	RStudio (≥ 2024.09.0) available at (https://posit.co/download/rstudio-desktop/) 
 
-•	Bioconductor (≥ 3.17) and 
+•	Bioconductor (≥ 3.19) and 
 
-•	Shiny (≥ 1.7.5)
+•	Shiny (≥ 1.9.1)
 
 Start an R session using RStudio and run the following commands to install the shiny package:
-if Bioconductor version is less than 3.17. Bioconductor could be updated by :
+if Bioconductor version is less than 3.19. Bioconductor could be updated by :
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -49,7 +49,7 @@ library(shiny)
 runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)
 ```
 ## Usage
-Tutorial for MetaDAVis https://github.com/GudaLab/MetaDAVis/blob/main/www/manual/MetaDAVis_manual.docx
+Tutorial for MetaDAVis https://github.com/GudaLab/MetaDAVis/blob/main/www/manual/MetaDAVis_manual.pdf
 
 ## Tested
-This Application was tested in Linux (Red Hat) and Windows 10
+This Application was tested in Linux (Red Hat and Ubuntu) and Windows (10 and 11)
