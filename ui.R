@@ -55,7 +55,7 @@ shinyUI(
         <p>MetaDAVis is deployed at: <a href='https://www.gudalab-rtools.net/MetaDAVis'>https://www.gudalab-rtools.net/MetaDAVis</a></p>
         <hr>
         <h3> Launch MetaDAVis using R and GitHub</h3>
-        <p> MetaDAVis were deposited under the GitHub repository: <br>
+        <p> MetaDAVis were deposited under the GitHub repository: <a href='https://github.com/GudaLab/MetaDAVis'>https://github.com/GudaLab/MetaDAVis</a><br>
         Before running the app, the user must have R (>= 4.4.1), RStudio (>= 2024.09.0), Bioconductor (>= 3.19) and Shiny (>= 1.9.1) (Tested with this version).<br>
          If users use an older R version, they may encounter errors in installing packages, So the users are recommended to update their R version first.<br>
          Once the user opens the R in the command line or Rstudio, need to run the following command in R to install the shiny package.<br><br></p>
