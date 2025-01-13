@@ -2,6 +2,7 @@ library(shiny)
 library(shinythemes)
 library(shinyFiles)
 library(DT)
+library(shinyjs)
 #library(bslib)
 #options(warn=-1)
 shinythemes::themeSelector()
@@ -45,7 +46,7 @@ shinyUI(
           <li>Heatmap: It was integrated with the ComplexHeatmap package. Display heatmap with and without row and column dendrograms and names.</li>
           <li>Differential abundance</li>
             <ul>
-            <li>Two groups: Six different analyses were provided using the Wilcoxon Rank Sum test, t-test, metagenomeSeq, DESeq2, Limma-Voom, and edgeR. These will perform statistical analysis and generate plots and summary tables based on the significant taxa.</li>
+            <li>Two groups: Six different analyses were provided using the Wilcoxon Rank Sum test, t-test, metagenomeSeq, DESeq2, Limma-Voom, edgeR, LEfSe, MaAsLin3. These will perform statistical analysis and generate plots and summary tables based on the significant taxa.</li>
             <li>Multiple groups comparison: Two different analyses, such as Kruskal-Wallis test and ANOVA was used for more than multiple group comparisons. These will perform statistical analysis and generate plots and summary tables based on the significant taxa.</li>
             </ul>
           </ul>
@@ -56,7 +57,7 @@ shinyUI(
         <hr>
         <h3> Launch MetaDAVis using R and GitHub</h3>
         <p> MetaDAVis were deposited under the GitHub repository: <a href='https://github.com/GudaLab/MetaDAVis'>https://github.com/GudaLab/MetaDAVis</a><br>
-        Before running the app, the user must have R (>= 4.4.1), RStudio (>= 2024.09.0), Bioconductor (>= 3.19) and Shiny (>= 1.9.1) (Tested with this version).<br>
+        Before running the app, the user must have R (>= 4.4.2), RStudio (>= 2024.12.0), Bioconductor (>= 3.20) and Shiny (>= 1.10.1) (Tested with this version).<br>
          If users use an older R version, they may encounter errors in installing packages, So the users are recommended to update their R version first.<br>
          Once the user opens the R in the command line or Rstudio, need to run the following command in R to install the shiny package.<br><br></p>
           
@@ -85,18 +86,23 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
 
        tabPanel(
       "Upload files",
+      useShinyjs(),
       sidebarLayout(
         sidebarPanel(
           h3("Upload files"),
-          selectInput("select_file_type", label = "Select Input format", choices = list("Qiime2" = "qiime_format", "Megan" ="Megan", "Taxa count file (prepare your own file based on examble)" = "check"), selected = "qiime_format"),
+          selectInput("select_file_type", label = "Select Input format", choices = list("Qiime2" = "qiime_format", "Megan" ="Megan", "Taxa count file (prepare your own file based on example)" = "check", "Example data (To test our tool)" ="example"), selected = "qiime_format"),
           h5("The file accepts .txt or .tsv (Megan and users own file) or .csv formats (Qiime2)"),
            fluidRow(
+          box(id = "box1", width = 12,
           column(width = 8, fileInput("file1", "Upload count file ", accept = c(".tsv", ".txt", ".csv"),multiple = F)),
           column(width = 4, selectInput("file1_split", "Fields separated by", c("tab" = "\t", "Comma" =","), selected = "tab")),
           ),
+           ),
           fluidRow(
+          box(id = "box2", width = 12,
           column(width = 8, fileInput("metadata", "Upload meta-data ", accept = c(".tsv", ".txt", ".csv"),multiple = F)),
           column(width = 4, selectInput("metadata_split", "Fields separated by", c("tab" = "\t", "Comma" =","), selected = "tab")),
+          ),
           ),
           radioButtons("select_RA_type", "Choose the level to display", choices = c("Kingdom" = 1, "Phylum" = 2, "Class" = 3, "Order" = 4, "Family" = 5,  "Genus" = 6, "Species" = 7), selected = 4),
           actionButton("action_level", "Submit")
@@ -182,15 +188,15 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
         "Group",
         sidebarLayout(
           sidebarPanel(
-            h3("Distribution of top bacterial taxa (groups)"), selectInput("input_RA_bar_plot_group", label = "Selected input", choices = "No data selected! please load the data first"),
+            h3("Distribution of top bacterial taxa (groups)"), selectInput("input_RA_bar_plot_group", label = "Selected input", choices = "Example data selected"),
             radioButtons("select_plot_type_group", "Types of plot", choices = c("Abundance (%) - stacked bar" = 1,"Abundance value - stacked bar" = 2, "Relative frequency - stacked bar" = 3), selected = 1),
+            selectInput("color_palette_group", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
             numericInput("top_n_bar_plot_group", label = "Number of top bacterial taxa (Max = 100)", value = 15),
             selectInput("select_image_type_group", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
             actionButton("action_m1_bar_plot_group", "Submit"),
           ),
           mainPanel(
-            withSpinner(plotOutput("bar_plot_group", width = "50%", height = "500px")),
-            h4("Relative abundance."),
+            withSpinner(plotOutput("bar_plot_group", width = "50%", height = "600px")),
             fluidRow(
             column(3, numericInput("bar_plot_group_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
             column(3, numericInput("bar_plot_group_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -205,14 +211,15 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
         sidebarLayout(
           sidebarPanel(
             h3("Distribution of top bacterial taxa (samples)"),
-            selectInput("input_RA_bar_plot_individual", label = "Selected input", choices = "No data selected! please load the data first"),
+            selectInput("input_RA_bar_plot_individual", label = "Selected input", choices = "Example data selected"),
             radioButtons("select_plot_type_individual", "Types of plot", choices = c("Abundance (%) - stacked bar" = 1,"Abundance value - stacked bar" = 2, "Relative frequency - stacked bar" = 3), selected = 1),
+            selectInput("color_palette_individual", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
             numericInput("top_n_bar_plot_individual", label = "Number of top bacterial taxa (Max = 100)", value = 15),
             selectInput("select_image_type_individual", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
             actionButton("action_m1_bar_plot_individual", "Submit"),
           ),
           mainPanel(
-            withSpinner(plotOutput("bar_plot_individual")),
+            withSpinner(plotOutput("bar_plot_individual", height = "600px")),
             fluidRow(
             column(3, numericInput("bar_plot_individual_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
             column(3, numericInput("bar_plot_individual_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -231,10 +238,11 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                  sidebarLayout(
                    sidebarPanel(
                      h3("Alpha diversity"),
-                     selectInput("input_RA_Alpha", label = "Selected input",choices = "No data selected! please load the data first"),
+                     selectInput("input_RA_Alpha", label = "Selected input",choices = "Example data selected"),
                      selectInput("select_alpha", label = "Select Method", choices = list("Observed" = 1, "Chao1" = 2, "ACE" = 3, "Shannon" = 4, "Simpson" = 5, "InvSimpson" = 6, "Fisher"=7, "All_Combined"=8), selected = 1),
                      radioButtons("select_alpha_pvalue", label = "Wilcoxon test", choices = c("Yes (show's Pvalue)" = "Yes", "No" = "No", "Show *" = "star"), selected = "No"),
                      radioButtons("select_plot",label = "Types of plot", choices = c("Box plot" = 1, "Violin plot" = 2), selected = 1),
+                     selectInput("select_alpha_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                      selectInput("select_image_type_alpha", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                      actionButton("action_alpha_diversity", "Submit"),
                    ),
@@ -244,7 +252,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                        tabPanel(
                          "Alpha diversity plot",
                          h3("Boxplot"),
-                         withSpinner(plotOutput("boxplot_Alpha_Div")),
+                         withSpinner(plotOutput("boxplot_Alpha_Div", height = "600px")),
                          br(),
                          br(),
                          br(),
@@ -273,9 +281,13 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                  sidebarLayout(
                    sidebarPanel(
                      h3("Beta diversity"),
-                     selectInput("input_RA_Beta", label = "Selected input", choices = "No data selected! please load the data first"),
-                     selectInput("select_beta", label = "Select diversity metrics", choices = c("bray-curtis" = "bray", "jaccard" = "jaccard", "manhattan" = "manhattan", "euclidean" = "euclidean", "canberra" = "canberra", "kulczynski" = "kulczynski", "gower" = "gower", "altGower" = "altGower", "morisita" = "morisita", "horn" = "horn", "mountford" = "mountford", "raup" = "raup", "binomial" = "binomial", "chao" = "chao", "cao" ="cao", "w" = "w","-1" = "-1","c" = "c","wb" = "wb","r" = "r","I" = "I","e" = "e","t" = "t","me" = "me","j" = "j","sor" = "sor","m" = "m","-2" = "-2","co" = "co","cc" = "cc","g" = "g","-3" = "-3","l" = "l","19" = "19","hk" = "hk","rlb" = "rlb","sim" = "sim","gl" = "gl","z" = "z","maximum" = "maximum","binary" = "binary","minkowski" = "minkowski"), selected = "bray"),
-                     selectInput("select_method", "Select method", choices = c("PCoA" = "PCoA", "NMDS" = "NMDS", "DCA" = "DCA", "CCA" = "CCA", "RDA" = "RDA", "MDS" = "MDS"), selected = "PCoA"),
+                     selectInput("input_RA_Beta", label = "Selected input", choices = "Example data selected"),
+                     h4("PERMANOVA Options"),
+                     selectInput("select_beta", label = "Select diversity methods", choices = c("bray"="bray", "manhattan"="manhattan", "jaccard"="jaccard", "euclidean"="euclidean", "canberra"="canberra", "clark"="clark", "kulczynski"="kulczynski", "gower"="gower", "altGower"="altGower", "morisita"="morisita", "horn"="horn", "mountford"="mountford", "raup"="raup", "binomial"="binomial", "chao"="chao", "cao"="cao", "mahalanobis"="mahalanobis", "chisq"="chisq", "chord"="chord", "hellinger"="hellinger", "aitchison"="aitchison", "robust.aitchison"="robust.aitchison"), selected = "bray"),
+                     numericInput("adonis_permutations", "Number of permutations", value = 99, min = 1, step = 1),
+                     selectInput("adonis_dissimilarities", label = "Square root of dissimilarities", choices = c("Yes" = "TRUE", "No" = "FALSE"), selected = "FALSE"),
+                     selectInput("select_method", "Select ordination based method", choices = c("PCoA" = "PCoA", "NMDS" = "NMDS", "DCA" = "DCA", "RDA" = "RDA", "MDS" = "MDS"), selected = "PCoA"),
+                     selectInput("select_beta_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                      selectInput("select_image_type_beta", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                      actionButton("action_beta_diversity", "Submit"),
                    ),
@@ -285,7 +297,7 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                        tabPanel(
                          "Beta diversity Plot",
                          h3("Beta diversity plot"),
-                         withSpinner(plotOutput("boxplot_Beta_Div")),
+                         withSpinner(plotOutput("boxplot_Beta_Div", height = "600px")),
                          fluidRow(
                          column(3, numericInput("Boxplot_beta_div_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                          column(3, numericInput("Boxplot_beta_div_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -301,6 +313,13 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
                          withSpinner(dataTableOutput("beta_table")),
                          downloadButton(outputId = "download_result_beta", label = "Download as csv"),
                        ),
+                       tabPanel(
+                         "Adonis Table",
+                         h3("Result - Permutation test for adonis under reduced model"),
+                         hr(),
+                         withSpinner(dataTableOutput("beta_table2")),
+                         downloadButton(outputId = "download_result_beta2", label = "Download as csv"),
+                       ),
                    ),
                  ),
                ),
@@ -314,10 +333,11 @@ navbarMenu("Dimension reduction",
              sidebarLayout(
                sidebarPanel(
                  h3("PCA-2D"),
-                 selectInput("input_RA_pca", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_RA_pca", label = "Selected input", choices = "Example data selected"),
                  selectInput("select_pca_label", "Label", choices = c("TRUE"="TRUE", "FALSE"="FALSE"), selected = FALSE),
                  numericInput("select_pca_label_size", label = "Label size", value = 3),
                  selectInput("select_pca_frame", "Frame", choices = c("TRUE"="TRUE", "FALSE"="FALSE"), selected = FALSE),
+                 selectInput("select_pca_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  selectInput("select_image_type_pca", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_pca", "Submit"),
                ),
@@ -352,7 +372,8 @@ navbarMenu("Dimension reduction",
              sidebarLayout(
                sidebarPanel(
                  h3("PCA-3D"),
-                 selectInput("input_RA_pca3d", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_RA_pca3d", label = "Selected input", choices = "Example data selected"),
+                 selectInput("select_pca3d_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  #selectInput("select_image_type_pca3d", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_pca3d", "Submit"),
                ),
@@ -382,9 +403,10 @@ navbarMenu("Dimension reduction",
              sidebarLayout(
                sidebarPanel(
                  h3("t-SNE"),
-                 selectInput("input_tsne", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_tsne", label = "Selected input", choices = "Example data selected"),
                  selectInput("select_tsne_method", "Select method", choices = c("counts"="counts", "rclr"="rclr", "hellinger"="hellinger", "pa"="pa", "rank"="rank", "relabundance"="relabundance"), selected = "counts"),
                  selectInput("select_tsne_dimension", "Select dimension to display", choices = c("2" = 2, "3" = 3), selected = 2),
+                 selectInput("select_tsne_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  selectInput("select_image_type_tsne", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_tsne", "Submit"),
                ),
@@ -419,9 +441,10 @@ navbarMenu("Dimension reduction",
              sidebarLayout(
                sidebarPanel(
                  h3("UMAP"),
-                 selectInput("input_umap", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_umap", label = "Selected input", choices = "Example data selected"),
                  selectInput("select_umap_method", "Select method", choices = c("counts"="counts", "rclr"="rclr", "hellinger"="hellinger", "pa"="pa", "rank"="rank", "relabundance"="relabundance"), selected = "counts"),
                  selectInput("select_umap_kvalue", "Select k value (for graph construction)", choices = c("2" = 2, "3" = 3, "4" = 4, "5" = 5, "6" = 6, "7" = 7, "8" = 8, "9" = 9, "10" = 10, "11" = 11, "12" = 12, "13" = 13, "14" = 14, "15" = 15), selected = 2),
+                 selectInput("select_umap_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  selectInput("select_image_type_umap", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_umap", "Submit"),
                ),
@@ -467,9 +490,11 @@ navbarMenu(
     "Taxa-based",
     sidebarLayout(
       sidebarPanel(
-        h3("Compute correlation between taxa"), selectInput("input_taxa_based_correlation", label = "Selected input", choices = "No data selected! please load the data first"),
+        h3("Compute correlation between taxa"), 
+        selectInput("input_taxa_based_correlation", label = "Selected input", choices = "Example data selected"),
         radioButtons("select_taxa_based_correlation_method", "Correlation methods", choices = c("pearson" = "pearson","kendall" = "kendall", "spearman" = "spearman"), selected = "pearson"),
         numericInput("select_taxa_based_correlation_label_size", label = "Label size", value = 3),
+        selectInput("select_taxa_geom_shape", label = "Geom shapes", choices = list("circle"="circle", "tile"="tile", "text"="text"), selected = "circle"),
         selectInput("select_image_type_taxa_based_correlation", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
         actionButton("action_taxa_based_correlation", "Submit"),
       ),
@@ -503,9 +528,11 @@ navbarMenu(
     "Sample-based",
     sidebarLayout(
       sidebarPanel(
-        h3("Compute correlation between samples"), selectInput("input_samples_based_correlation", label = "Selected input", choices = "No data selected! please load the data first"),
+        h3("Compute correlation between samples"), 
+        selectInput("input_samples_based_correlation", label = "Selected input", choices = "Example data selected"),
         radioButtons("select_samples_based_correlation_method", "Correlation methods", choices = c("pearson" = "pearson","kendall" = "kendall", "spearman" = "spearman"), selected = "pearson"),
         numericInput("select_samples_based_correlation_label_size", label = "Label size", value = 3),
+        selectInput("select_sample_geom_shape", label = "Geom shapes", choices = list("circle"="circle", "tile"="tile", "text"="text"), selected = "circle"),
         selectInput("select_image_type_samples_based_correlation", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
         actionButton("action_samples_based_correlation", "Submit"),
       ),
@@ -515,7 +542,7 @@ navbarMenu(
           tabPanel(
             "Correlation plot",
             withSpinner(plotOutput("plot_samples_based_correlation", width = "100%", height = "1000px")),
-            h4("Samples based correlation plot."),
+            h4("Taxa Samples based correlation plot."),
             fluidRow(
               column(3, numericInput("samples_based_correlation_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
               column(3, numericInput("samples_based_correlation_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -535,14 +562,18 @@ navbarMenu(
       ),
     ),
   ),
-),
+  ),
 #Heatmap
 tabPanel(
   "Heatmap",
   sidebarLayout(
     sidebarPanel(
       h3("Heatmap - relative abundance"),
-      selectInput("input_heatmap", label = "Selected input", choices = "No data selected! please load the data first"),
+      selectInput("input_heatmap", label = "Selected input", choices = "Example data selected"),
+      selectInput("heatmap_clustering_method_rows", label = "Clustering method rows", choices = list("complete" = "complete", "single"= "single", "average (UPGMA)" = "average", "mcquitty (WPGMA)" = "mcquitty", "median (WPGMC)" = "median", "centroid (UPGMC)" = "centroid"), selected = "complete"),
+      selectInput("heatmap_clustering_method_columns", label = "Clustering method columns", choices = list("complete" = "complete", "single"= "single", "average (UPGMA)" = "average", "mcquitty (WPGMA)" = "mcquitty", "median (WPGMC)" = "median", "centroid (UPGMC)" = "centroid"), selected = "complete"),
+      selectInput("heatmap_normalization", label = "Normalization method", choices = list("scale"="scale", "minmax"="minmax", "log"="log", "Row normalization"="row", "Column normalization"="column", "None"="none"), selected = "scale"),
+      selectInput("heatmap_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
       selectInput("heatmap_row_names", "Show row names", choices = c("TRUE"="TRUE", "FALSE"="FALSE"), selected = TRUE),
       numericInput("heatmap_row_names_size", label = "Row name size", value = 7),
       selectInput("heatmap_column_names", "Show column names", choices = c("TRUE"="TRUE", "FALSE"="FALSE"), selected = TRUE),
@@ -554,8 +585,8 @@ tabPanel(
       actionButton("action_heatmap", "Submit"),
     ),
     mainPanel(
-      withSpinner(plotOutput("plot_heatmap", width = "100%", height = "800px")),
-      h4("Heatmap using relative abundance."),
+      h4("Heatmap using relative abundance"),
+      withSpinner(plotOutput("plot_heatmap", width = "100%", height = "1000px")),
       fluidRow(
         column(3, numericInput("heatmap_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
         column(3, numericInput("heatmap_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -573,11 +604,12 @@ navbarMenu("Differential abundance",
              sidebarLayout(
                sidebarPanel(
                  h3("Wilcoxon Rank Sum test"),
-                 selectInput("input_wilcoxtest", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_wilcoxtest", label = "Selected input", choices = "Example data selected"),
                  selectInput("group1_wilcoxtest", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_wilcoxtest", label = "Select condition2", choices = "Please upload metadata in upload page"),
                  selectInput("select_wilcoxtest_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("wilcoxtest_pvalue","FDR or Pvalue", value = "0.05"),
+                 selectInput("wilcox_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_wilcoxtest_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
                  selectInput("select_image_type_wilcoxtest", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_wilcoxtest", "Submit"),
@@ -625,11 +657,12 @@ navbarMenu("Differential abundance",
              sidebarLayout(
                sidebarPanel(
                  h3("t-test: Two sample t-test"),
-                 selectInput("input_ttest", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_ttest", label = "Selected input", choices = "Example data selected"),
                  selectInput("group1_ttest", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_ttest", label = "Select condition2", choices = "Please upload metadata in upload page"),
                  selectInput("select_ttest_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("ttest_pvalue","FDR or Pvalue", value = "0.05"),
+                 selectInput("ttest_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_ttest_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
                  selectInput("select_image_type_ttest", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_ttest", "Submit"),
@@ -677,11 +710,12 @@ navbarMenu("Differential abundance",
              sidebarLayout(
                sidebarPanel(
                  h3("metagenomeSeq"),
-                 selectInput("input_RA_metagenomeseq", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_RA_metagenomeseq", label = "Selected input", choices = "Example data selected"),
                  selectInput("group1_metagenomeseq", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_metagenomeseq", label = "Select condition2", choices = "Please upload metadata in upload page"),
                  selectInput("select_metagenomeseq_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("metagenomeseq_pvalue","FDR or Pvalue", value = "0.05"),
+                 selectInput("metagenomeseq_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_metagenomeseq_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
                  selectInput("select_image_type_metagenomeseq", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_metagenomeseq", "Submit"),
@@ -729,11 +763,12 @@ navbarMenu("Differential abundance",
              sidebarLayout(
                sidebarPanel(
                  h3("DESeq2"),
-                 selectInput("input_RA_deseq2", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_RA_deseq2", label = "Selected input", choices = "Example data selected"),
                  selectInput("group1_deseq2", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_deseq2", label = "Select condition2", choices = "Please upload metadata in upload page"),
                  selectInput("select_deseq2_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("deseq2_pvalue","FDR or Pvalue", value = "0.05"),
+                 selectInput("deseq2_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_deseq2_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
                  selectInput("select_image_type_deseq2", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_deseq2", "Submit"),
@@ -778,15 +813,98 @@ navbarMenu("Differential abundance",
              ),
            ),
            tabPanel(
+             "LEfSe",
+             sidebarLayout(
+               sidebarPanel(
+                 h3("Linear discriminant analysis (LDA) Effect Size (LEfSe)"),
+                 selectInput("input_RA_LEfSe", label = "Selected input", choices = "Example data selected"),
+                 selectInput("group1_LEfSe", label = "Select condition1", choices = "Please upload metadata in upload page"),
+                 selectInput("group2_LEfSe", label = "Select condition2", choices = "Please upload metadata in upload page"),
+                 selectInput("select_LEfSe_method", label = "Method", choices = list("BH"="BH", "holm"="holm", "hochberg"="hochberg", "hommel"="hommel", "bonferroni"="bonferroni", "BY"="BY", "none"="none"), selected = "BH"),
+                 numericInput("select_LEfSe_pvalue","kruskal.threshold", value = "0.05"),
+                 numericInput("select_LEfSe_threshold","lda.threshold", value = "2"),
+                 selectInput("select_LEfSe_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
+                 selectInput("select_image_type_LEfSe", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
+                 actionButton("action_LEfSe", "Submit"),
+               ),
+               mainPanel(
+                 tabsetPanel(
+                   type = "tabs",
+                   tabPanel(
+                     "Summary Table",
+                     h3("Result - OTUs that were significantly different between two groups"),
+                     withSpinner(verbatimTextOutput("text_LEfSe_level")),
+                     fluidRow(
+                       column(
+                         withSpinner(dataTableOutput("LEfSe_table")), width = 12),
+                     ),
+                     hr(),
+                     fluidRow(
+                       column(3, h4("Download significant"),
+                              downloadButton(outputId = "download_result_LEfSe_1", label = "Download as csv")),
+                       column(3, h4("Total counts in each samples"),
+                              downloadButton(outputId = "download_result_LEfSe_4", label = "Download as csv")),
+                     ),
+                   ),
+                   tabPanel(
+                     "Plot",
+                     h3("Plot"),
+                     withSpinner(plotOutput("boxplot_LEfSe", width = "100%", height = "800px")),
+                     fluidRow(
+                       column(3, numericInput("Boxplot_LEfSe_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
+                       column(3, numericInput("Boxplot_LEfSe_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
+                       column(3, numericInput("Boxplot_LEfSe_output_dpi", label = h5("Figure resolution (dpi:72 to 300)"), value = 300, width = "300px")),
+                     ),
+                     downloadButton(outputId = "download_Boxplot_LEfSe", label = "Download plot"),
+                   ),
+                   
+                 ),
+               ),
+             ),
+           ),
+           
+           
+            tabPanel(
+             "MaAsLin3",
+             sidebarLayout(
+               sidebarPanel(
+                 h3("Microbiome Multivariable Associations with Linear Models"),
+                 selectInput("input_RA_MaAsLin3", label = "Selected input", choices = "Example data selected"),
+                 selectInput("group1_MaAsLin3", label = "Select condition1", choices = "Please upload metadata in upload page"),
+                 selectInput("group2_MaAsLin3", label = "Select condition2", choices = "Please upload metadata in upload page"),
+                 selectInput("select_MaAsLin3_normalization", label = "Normalization", choices = list("TSS - total sum scaling"="TSS", "CLR - centered log ratio"="CLR", "NONE"="NONE"), selected = "TSS"),
+                 selectInput("select_MaAsLin3_transformation", label = "Transformation", choices = list("LOG"="LOG", "PLOG"="PLOG", "NONE"="NONE"), selected = "TSS"),
+                 selectInput("select_MaAsLin3_correction", label = "Correction", choices = list("BH"="BH"), selected = "BH"),
+                 numericInput("select_MaAsLin3_pvalue","FDR corrected q-value", value = "0.1"),
+                 actionButton("action_MaAsLin3", "Submit"),
+               ),
+               mainPanel(
+                 tabsetPanel(
+                   type = "tabs",
+                   tabPanel(
+                     "Results",
+                     h3("Results"),
+                     withSpinner(verbatimTextOutput("text_MaAsLin3_level")),
+                     h3("Download results"),
+                     downloadButton(outputId = "download_zip_MaAsLin3", label = "Download Output as ZIP"),
+                   ),
+                   
+                 ),
+               ),
+             ),
+           ),
+           
+           tabPanel(
              "Limma-Voom",
              sidebarLayout(
                sidebarPanel(
                  h3("Limma-Voom"),
-                 selectInput("input_RA_limma", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_RA_limma", label = "Selected input", choices = "Example data selected"),
                  selectInput("group1_limma", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_limma", label = "Select condition2", choices = "Please upload metadata in upload page"),
                  selectInput("select_limma_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("limma_pvalue","FDR or Pvalue", value = "0.05"),
+                 selectInput("limma_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_limma_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
                  selectInput("select_image_type_limma", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_limma", "Submit"),
@@ -833,11 +951,12 @@ navbarMenu("Differential abundance",
              sidebarLayout(
                sidebarPanel(
                  h3("edgeR"),
-                 selectInput("input_RA_edger", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_RA_edger", label = "Selected input", choices = "Example data selected"),
                  selectInput("group1_edger", label = "Select condition1", choices = "Please upload metadata in upload page"),
                  selectInput("group2_edger", label = "Select condition2", choices = "Please upload metadata in upload page"),
                  selectInput("select_edger_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("edger_pvalue","FDR or Pvalue", value = "0.05"),
+                 selectInput("edger_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_edger_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Heatmap" = 3), selected = 1),
                  selectInput("select_image_type_edger", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_edger", "Submit"),
@@ -885,10 +1004,11 @@ navbarMenu("Differential abundance",
              sidebarLayout(
                sidebarPanel(
                  h3("Kruskal-Wallis test"),
-                 selectInput("input_kruskal_wallis_test", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_kruskal_wallis_test", label = "Selected input", choices = "Example data selected"),
                  selectInput("select_kruskal_wallis_test_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("kruskal_wallis_test_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("kruskal_wallis_test_ad_hoc", "Post-hoc test", choices = c("Yes" = "Yes", "No" = "No"), selected = "No"),
+                 selectInput("kruskal_wallis_test_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("kruskal_wallis_test_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Heatmap" = 3), selected = 1),
                  selectInput("select_image_type_kruskal_wallis_test", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_kruskal_wallis_test", "Submit"),
@@ -936,10 +1056,11 @@ navbarMenu("Differential abundance",
              sidebarLayout(
                sidebarPanel(
                  h3("Analysis of variance: ANOVA"),
-                 selectInput("input_anova", label = "Selected input", choices = "No data selected! please load the data first"),
+                 selectInput("input_anova", label = "Selected input", choices = "Example data selected"),
                  selectInput("select_anova_pvalue", label = "Test correction", choices = list("Benjamini-Hochberg FDR" = "padj", "P-value" = "pvalue"), selected = "padj"),
                  numericInput("anova_pvalue","FDR or Pvalue", value = "0.05"),
                  radioButtons("anova_ad_hoc", "Post-hoc test", choices = c("Yes" = "Yes", "No" = "No"), selected = "No"),
+                 selectInput("anova_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("anova_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Heatmap" = 3), selected = 1),
                  selectInput("select_image_type_anova", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_anova", "Submit"),
