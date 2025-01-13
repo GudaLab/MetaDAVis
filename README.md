@@ -20,13 +20,13 @@ Download the MetaDAVis application locally from the GitHub page (https://github.
 
 ### Requirement:
 
-•	R (≥ 4.4.1), available at (https://www.r-project.org/)
+•	R (≥ 4.4.2), available at (https://www.r-project.org/)
 
-•	RStudio (≥ 2024.09.0) available at (https://posit.co/download/rstudio-desktop/) 
+•	RStudio (≥ 2024.12.0) available at (https://posit.co/download/rstudio-desktop/) 
 
-•	Bioconductor (≥ 3.19) and 
+•	Bioconductor (≥ 3.20) and 
 
-•	Shiny (≥ 1.9.1)
+•	Shiny (≥ 1.10.0)
 
 Start an R session using RStudio and run the following commands to install the shiny package:
 if Bioconductor version is less than 3.19. Bioconductor could be updated by :
