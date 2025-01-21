@@ -490,39 +490,40 @@ navbarMenu(
     "Taxa-based",
     sidebarLayout(
       sidebarPanel(
-        h3("Compute correlation between taxa"), 
-        selectInput("input_taxa_based_correlation", label = "Selected input", choices = "Example data selected"),
-        radioButtons("select_taxa_based_correlation_method", "Correlation methods", choices = c("pearson" = "pearson","kendall" = "kendall", "spearman" = "spearman"), selected = "pearson"),
-        numericInput("select_taxa_based_correlation_label_size", label = "Label size", value = 3),
-        selectInput("select_taxa_geom_shape", label = "Geom shapes", choices = list("circle"="circle", "tile"="tile", "text"="text"), selected = "circle"),
-        selectInput("select_image_type_taxa_based_correlation", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
-        actionButton("action_taxa_based_correlation", "Submit"),
+        h3("Compute correlation between taxa for selected condition(s)"), 
+        selectInput("input_taxa_condition_based_correlation", label = "Selected input", choices = "Example data selected"),
+        selectInput("input_taxa_condition_based_correlation2", label = "Select condition(s)", choices = "Please upload metadata in upload page", multiple = TRUE),
+        radioButtons("select_taxa_condition_based_correlation_method", "Correlation methods", choices = c("pearson" = "pearson","kendall" = "kendall", "spearman" = "spearman"), selected = "pearson"),
+        numericInput("select_taxa_condition_based_correlation_label_size", label = "Label size", value = 3),
+        selectInput("select_taxa_condition_geom_shape", label = "Geom shapes", choices = list("circle"="circle", "tile"="tile", "text"="text"), selected = "circle"),
+        selectInput("select_image_taxa_condition_based_correlation", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
+        actionButton("action_taxa_condition_based_correlation", "Submit"),
       ),
       mainPanel(
         tabsetPanel(
           type = "tabs",
           tabPanel(
             "Correlation plot",
-            withSpinner(plotOutput("plot_taxa_based_correlation", width = "100%", height = "1000px")),
-        h4("Taxa based correlation plot."),
-        fluidRow(
-          column(3, numericInput("taxa_based_correlation_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
-          column(3, numericInput("taxa_based_correlation_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
-          column(3, numericInput("taxa_based_correlation_output_dpi", label = h5("Figure resolution (dpi:72 to 300)"), value = 300, width = "300px")),
+            withSpinner(plotOutput("plot_taxa_condition_based_correlation", width = "100%", height = "1000px")),
+            h4("Taxa based correlation plot."),
+            fluidRow(
+              column(3, numericInput("taxa_condition_based_correlation_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
+              column(3, numericInput("taxa_condition_based_correlation_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
+              column(3, numericInput("taxa_condition_based_correlation_output_dpi", label = h5("Figure resolution (dpi:72 to 300)"), value = 300, width = "300px")),
+            ),
+            downloadButton(outputId = "download_plot_taxa_condition_based_correlation", label = "Download plot"),
+          ),
+          tabPanel(
+            "Summary Table",
+            fluidRow(
+              column(
+                withSpinner(dataTableOutput("taxa_condition_based_correlation_table")),
+                downloadButton(outputId = "download_result_taxa_condition_based_correlation", label = "Download as csv"), width = 8),
+            ),
+          ),
         ),
-        downloadButton(outputId = "download_plot_taxa_based_correlation", label = "Download plot"),
       ),
-      tabPanel(
-        "Summary Table",
-        fluidRow(
-          column(
-            withSpinner(dataTableOutput("taxa_based_correlation_table")),
-        downloadButton(outputId = "download_result_taxa_based_correlation", label = "Download as csv"), width = 8),
-        ),
-      ),
-     ),
     ),
-  ),
   ),
   tabPanel(
     "Sample-based",
@@ -530,6 +531,7 @@ navbarMenu(
       sidebarPanel(
         h3("Compute correlation between samples"), 
         selectInput("input_samples_based_correlation", label = "Selected input", choices = "Example data selected"),
+        selectInput("input_samples_based_correlation2", label = "Select condition(s)", choices = "Please upload metadata in upload page", multiple = TRUE),
         radioButtons("select_samples_based_correlation_method", "Correlation methods", choices = c("pearson" = "pearson","kendall" = "kendall", "spearman" = "spearman"), selected = "pearson"),
         numericInput("select_samples_based_correlation_label_size", label = "Label size", value = 3),
         selectInput("select_sample_geom_shape", label = "Geom shapes", choices = list("circle"="circle", "tile"="tile", "text"="text"), selected = "circle"),
@@ -542,7 +544,7 @@ navbarMenu(
           tabPanel(
             "Correlation plot",
             withSpinner(plotOutput("plot_samples_based_correlation", width = "100%", height = "1000px")),
-            h4("Taxa Samples based correlation plot."),
+            h4("Taxa Samples based correlation plot for selected condition(s)."),
             fluidRow(
               column(3, numericInput("samples_based_correlation_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
               column(3, numericInput("samples_based_correlation_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),

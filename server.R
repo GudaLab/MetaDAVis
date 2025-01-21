@@ -511,10 +511,22 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_samples_based_correlation", choices = labels_data_type)
   })
   
+  #Update conditions
+  observeEvent(input$action_level,{
+    label_condition1 <- "Please upload metadata in upload page"
+    if(is.null(dataInput_RA_level()[[10]])){
+      label_type1 <- "Please upload metadata in upload page"
+    }
+    else{
+      label_condition1<- dataInput_RA_level()[[10]]
+    }
+    updateSelectInput(session, "input_samples_based_correlation2", choices = label_condition1, selected = label_condition1[1])
+  })
+  
   data_samples_based_correlation_table <- eventReactive(input$action_samples_based_correlation,{
     source("scripts/samples_based_correlation.R")
     labels_data_type<- input$file1$name
-    samples_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], method = input$select_samples_based_correlation_method, labe_size =input$select_samples_based_correlation_label_size, select_sample_geom_shape=input$select_sample_geom_shape)
+    samples_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$input_samples_based_correlation2, method = input$select_samples_based_correlation_method, labe_size =input$select_samples_based_correlation_label_size, select_sample_geom_shape=input$select_sample_geom_shape)
   })
   
   output$samples_based_correlation_table <- renderDataTable(DT::datatable(data_samples_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
@@ -540,42 +552,54 @@ server <- function(input, output, session) {
     }
   )  
   
-  #####################################
-  ## Correlation: Taxa Samples-based ##
-  #####################################
+  ##########################################
+  ##   Correlation: Taxa-condition based  ##
+  ##########################################  
   
   
   observe({
     labels_data_type<- input$file1$name
-    updateSelectInput(session, "input_taxa_samples_based_correlation", choices = labels_data_type)
+    updateSelectInput(session, "input_taxa_condition_based_correlation", choices = labels_data_type)
   })
   
-  data_taxa_samples_based_correlation_table <- eventReactive(input$action_taxa_samples_based_correlation,{
-    source("scripts/taxa_samples_based_correlation.R")
+  #Update conditions
+  observeEvent(input$action_level,{
+    label_condition1 <- "Please upload metadata in upload page"
+    if(is.null(dataInput_RA_level()[[10]])){
+      label_type1 <- "Please upload metadata in upload page"
+    }
+    else{
+      label_condition1<- dataInput_RA_level()[[10]]
+    }
+    updateSelectInput(session, "input_taxa_condition_based_correlation2", choices = label_condition1, selected = label_condition1[1])
+  })
+  
+  data_taxa_condition_based_correlation_table <- eventReactive(input$action_taxa_condition_based_correlation,{
+    source("scripts/taxa_condition_based_correlation.R")
     labels_data_type<- input$file1$name
-    taxa_samples_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], method = input$select_taxa_samples_based_correlation_method, label_size =input$select_taxa_samples_based_correlation_label_size)
+    taxa_condition_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$input_taxa_condition_based_correlation2, method = input$select_taxa_condition_based_correlation_method, labe_size =input$select_taxa_condition_based_correlation_label_size,  select_taxa_condition_geom_shape=input$select_taxa_condition_geom_shape)
   })
   
-  output$taxa_samples_based_correlation_table <- renderDataTable(DT::datatable(data_taxa_samples_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
+  output$taxa_condition_based_correlation_table <- renderDataTable(DT::datatable(data_taxa_condition_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
   
-  output$download_result_taxa_samples_based_correlation <- downloadHandler(
+  output$download_result_taxa_condition_based_correlation <- downloadHandler(
     filename = function() { 
-      paste("taxa_samples_based_correlation_result_", input$select_taxa_samples_based_correlation_method, '.csv', sep='') },
+      paste("taxa_condition_based_correlation_result_", input$select_taxa_condition_based_correlation_method, '.csv', sep='') },
     content = function(file){
-      write.csv(data_taxa_samples_based_correlation_table()[[2]], file)
+      write.csv(data_taxa_condition_based_correlation_table()[[2]], file)
     }
   )
   
-  output$plot_taxa_samples_based_correlation <- renderPlot({
-    data_taxa_samples_based_correlation_table()[[1]]
+  output$plot_taxa_condition_based_correlation <- renderPlot({
+    data_taxa_condition_based_correlation_table()[[1]]
   })
   
-  output$download_plot_taxa_samples_based_correlation <- downloadHandler(
+  output$download_plot_taxa_condition_based_correlation <- downloadHandler(
     filename = function(){
-      paste("taxa_samples_based_correlation_plot_", input$select_taxa_samples_based_correlation_method, input$select_taxa_image_type_samples_based_correlation, sep="")
+      paste("taxa_condition_based_correlation_plot_", input$select_taxa_condition_based_correlation_method, input$select_image_taxa_condition_based_correlation, sep="")
     },
     content = function(file){
-      ggsave(file,plot = data_taxa_samples_based_correlation_table()[[1]], width = input$taxa_samples_based_correlation_output_width, height = input$taxa_samples_based_correlation_output_height, dpi = input$taxa_samples_based_correlation_output_dpi, units = "in")
+      ggsave(file,plot = data_taxa_condition_based_correlation_table()[[1]], width = input$taxa_condition_based_correlation_output_width, height = input$taxa_condition_based_correlation_output_height, dpi = input$taxa_condition_based_correlation_output_dpi, units = "in")
     }
   )  
   
