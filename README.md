@@ -53,3 +53,6 @@ Tutorial for MetaDAVis https://github.com/GudaLab/MetaDAVis/blob/main/www/manual
 
 ## Tested
 This Application was tested in Linux (Red Hat and Ubuntu) and Windows (10 and 11)
+
+## Citation: 
+Jagadesan S, Guda C (2025) MetaDAVis: An R shiny application for metagenomic data analysis and visualization. PLoS ONE 20(4): e0319949. (https://doi.org/10.1371/journal.pone.0319949)
