@@ -18,7 +18,7 @@ How to start MetaDAVis locally
 
 Download the MetaDAVis application locally from the GitHub page (https://github.com/GudaLab/MetaDAVis).
 
-### Requirement:
+### Requirement
 
 •	R (≥ 4.4.2), available at (https://www.r-project.org/)
 
@@ -54,5 +54,5 @@ Tutorial for MetaDAVis https://github.com/GudaLab/MetaDAVis/blob/main/www/manual
 ## Tested
 This Application was tested in Linux (Red Hat and Ubuntu) and Windows (10 and 11)
 
-## Citation: 
+## Citation
 Jagadesan S, Guda C (2025) MetaDAVis: An R shiny application for metagenomic data analysis and visualization. PLoS ONE 20(4): e0319949. (https://doi.org/10.1371/journal.pone.0319949)
