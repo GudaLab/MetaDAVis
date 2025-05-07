@@ -75,6 +75,9 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
 <hr>
 <h3>Help manual for the usage of MetaDAVis <a href='manual/MetaDAVis_manual.pdf', target='_blank'>[Download]</a></h3>
 <hr>
+<h3>Cite: </h3>
+<p> Jagadesan S, Guda C (2025) MetaDAVis: An R shiny application for metagenomic data analysis and visualization. PLoS ONE 20(4): e0319949. <a href='https://doi.org/10.1371/journal.pone.0319949'>https://doi.org/10.1371/journal.pone.0319949</a></p>
+<hr>
 <h3> Developed and maintained by</h3>
 <p>This application was created by Sankarasubramanian Jagdesan and Babu Guda.  We share the passion about developing an user-friendly tool for all biologists, especially those who do not have access to bioinformaticians or programming efficency.
 </p>
