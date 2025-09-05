@@ -467,39 +467,39 @@ server <- function(input, output, session) {
   #############################  
   
   
-  observe({
-    labels_data_type<- input$file1$name
-    updateSelectInput(session, "input_taxa_based_correlation", choices = labels_data_type)
-  })
-  
-  data_taxa_based_correlation_table <- eventReactive(input$action_taxa_based_correlation,{
-    source("scripts/taxa_based_correlation.R")
-    labels_data_type<- input$file1$name
-    taxa_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], method = input$select_taxa_based_correlation_method, labe_size =input$select_taxa_based_correlation_label_size,  select_taxa_geom_shape=input$select_taxa_geom_shape)
-  })
-  
-  output$taxa_based_correlation_table <- renderDataTable(DT::datatable(data_taxa_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
-  
-  output$download_result_taxa_based_correlation <- downloadHandler(
-    filename = function() { 
-      paste("taxa_based_correlation_result_", input$select_taxa_based_correlation_method, '.csv', sep='') },
-    content = function(file){
-      write.csv(data_taxa_based_correlation_table()[[2]], file)
-    }
-  )
-  
-  output$plot_taxa_based_correlation <- renderPlot({
-    data_taxa_based_correlation_table()[[1]]
-  })
-  
-  output$download_plot_taxa_based_correlation <- downloadHandler(
-    filename = function(){
-      paste("taxa_based_correlation_plot_", input$select_taxa_based_correlation_method, input$select_image_type_taxa_based_correlation, sep="")
-    },
-    content = function(file){
-      ggsave(file,plot = data_taxa_based_correlation_table()[[1]], width = input$taxa_based_correlation_output_width, height = input$taxa_based_correlation_output_height, dpi = input$taxa_based_correlation_output_dpi, units = "in")
-    }
-  )  
+  # observe({
+  #   labels_data_type<- input$file1$name
+  #   updateSelectInput(session, "input_taxa_based_correlation", choices = labels_data_type)
+  # })
+  # 
+  # data_taxa_based_correlation_table <- eventReactive(input$action_taxa_based_correlation,{
+  #   source("scripts/taxa_based_correlation.R")
+  #   labels_data_type<- input$file1$name
+  #   taxa_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], method = input$select_taxa_based_correlation_method, labe_size =input$select_taxa_based_correlation_label_size,  select_taxa_geom_shape=input$select_taxa_geom_shape)
+  # })
+  # 
+  # output$taxa_based_correlation_table <- renderDataTable(DT::datatable(data_taxa_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
+  # 
+  # output$download_result_taxa_based_correlation <- downloadHandler(
+  #   filename = function() { 
+  #     paste("taxa_based_correlation_result_", input$select_taxa_based_correlation_method, '.csv', sep='') },
+  #   content = function(file){
+  #     write.csv(data_taxa_based_correlation_table()[[2]], file)
+  #   }
+  # )
+  # 
+  # output$plot_taxa_based_correlation <- renderPlot({
+  #   data_taxa_based_correlation_table()[[1]]
+  # })
+  # 
+  # output$download_plot_taxa_based_correlation <- downloadHandler(
+  #   filename = function(){
+  #     paste("taxa_based_correlation_plot_", input$select_taxa_based_correlation_method, input$select_image_type_taxa_based_correlation, sep="")
+  #   },
+  #   content = function(file){
+  #     ggsave(file,plot = data_taxa_based_correlation_table()[[1]], width = input$taxa_based_correlation_output_width, height = input$taxa_based_correlation_output_height, dpi = input$taxa_based_correlation_output_dpi, units = "in")
+  #   }
+  # )  
   
   ################################
   ## Correlation: Samples-based ##
