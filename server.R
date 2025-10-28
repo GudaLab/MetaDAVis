@@ -2,6 +2,11 @@ source("global.R")
 #library("R.utils")
 #options(warn=-1)
 server <- function(input, output, session) {
+    # Increment exactly once when the session first renders
+  session$onFlushed(function() {
+    current <- increment_count()
+    output$view_count <- renderText(format(current, big.mark = ","))
+  }, once = TRUE)
   
 
 ###########################

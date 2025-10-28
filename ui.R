@@ -83,6 +83,14 @@ runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)</pre>
 </p>
 <hr>
 "),
+tags$head(
+         tags$style(HTML("
+    #view_count { color: #dc2626; font-weight: 700; }  /* red, bold number */
+    .views-center { text-align: center; }
+  "))
+       ),
+       tags$div(class = "views-center", tags$p("Total number of views: ",textOutput("view_count", inline = TRUE))),
+       hr(),
         
     ),
    ),
