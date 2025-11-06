@@ -1139,6 +1139,14 @@ navbarMenu("Differential abundance",
              ),
            ),
 ),
+tabPanel(
+  "Session Info",
+  tags$h4("R Session"),
+  downloadButton("download_sess", "Download session-info.txt"),
+  br(),
+  withSpinner(verbatimTextOutput("sess")),
+  
+),
 )
 )
 
