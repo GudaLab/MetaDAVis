@@ -536,7 +536,7 @@ navbarMenu(
           type = "tabs",
           tabPanel(
             "Correlation plot",
-            withSpinner(plotOutput("plot_taxa_condition_based_correlation", width = "100%", height = "1000px")),
+            uiOutput("taxa_condition_based_correlation_plot_ui"),
             h4("Taxa based correlation plot."),
             fluidRow(
               column(3, numericInput("taxa_condition_based_correlation_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),

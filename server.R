@@ -630,6 +630,42 @@ server <- function(input, output, session) {
       write.csv(data_taxa_condition_based_correlation_table()[[2]], file)
     }
   )
+
+  taxa_condition_based_correlation_plot_dims <- reactive({
+    plot_data <- data_taxa_condition_based_correlation_table()[[2]]
+
+    if (is.null(plot_data) || nrow(plot_data) == 0) {
+      return(list(width = 1100, height = 1000))
+    }
+
+    axis_labels <- unique(c(as.character(plot_data$x), as.character(plot_data$y)))
+    axis_labels <- axis_labels[!is.na(axis_labels) & nzchar(axis_labels)]
+
+    label_count <- length(axis_labels)
+    max_label_length <- if (label_count > 0) max(nchar(axis_labels), na.rm = TRUE) else 0
+
+    list(
+      width = max(1100, min(3200, 220 + label_count * 22 + max_label_length * 7)),
+      height = max(1000, min(3200, 220 + label_count * 20 + max_label_length * 4))
+    )
+  })
+
+  output$taxa_condition_based_correlation_plot_ui <- renderUI({
+    req(input$action_taxa_condition_based_correlation > 0)
+
+    dims <- taxa_condition_based_correlation_plot_dims()
+
+    withSpinner(
+      div(
+        style = "width: 100%; height: 20%; overflow-x: auto;",
+        plotOutput(
+          "plot_taxa_condition_based_correlation",
+          width = paste0(dims$width, "px"),
+          height = paste0(dims$height, "px")
+        )
+      )
+    )
+  })
   
   output$plot_taxa_condition_based_correlation <- renderPlot({
     data_taxa_condition_based_correlation_table()[[1]]
