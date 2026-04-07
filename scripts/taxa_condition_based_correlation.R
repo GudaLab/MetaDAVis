@@ -59,12 +59,15 @@ taxa_condition_based_correlation_plot_table <- function(
     size        = labe_size,
     geom        = select_taxa_condition_geom_shape,
     method      = c("pairwise", method)
-  ) +
+  ) 
+  p <- p +
     theme_minimal() +
     theme(
-      axis.text     = element_text(size = 12, color = "black"),
+      axis.text.x   = element_text(size = 8, angle = 45, hjust = 1, vjust = 1, color = "black"),
+      axis.text.y   = element_text(size = 8, color = "black"),
       legend.title  = element_text(size = 12),
-      legend.text   = element_text(size = 10)
+      legend.text   = element_text(size = 10),
+      plot.margin   = margin(20, 20, 20, 20)
     )
   
   # 8) round numeric values in plot data (if present)
