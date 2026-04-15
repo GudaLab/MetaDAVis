@@ -23,6 +23,437 @@ server <- function(input, output, session) {
     current <- increment_count()
     output$view_count <- renderText(format(current, big.mark = ","))
   }, once = TRUE)
+
+  default_if_missing <- function(x, y) {
+    if (is.null(x) || length(x) == 0) {
+      return(y)
+    }
+
+    if (is.character(x) && length(x) == 1 && !nzchar(x)) {
+      return(y)
+    }
+
+    x
+  }
+
+  format_timestamp <- function(x) {
+    format(x, "%Y-%m-%d %I:%M:%S %p")
+  }
+
+  format_scope <- function(menu, tab) {
+    menu <- default_if_missing(menu, "")
+    tab <- default_if_missing(tab, "")
+
+    if (!nzchar(menu)) {
+      return(tab)
+    }
+
+    if (!nzchar(tab) || identical(menu, tab)) {
+      return(menu)
+    }
+
+    paste(menu, tab, sep = " > ")
+  }
+
+  status_class <- function(status) {
+    tolower(gsub("[^a-z0-9]+", "-", status))
+  }
+
+  extract_ui_input_labels <- function(path = "ui.R") {
+    if (!file.exists(path)) {
+      return(character(0))
+    }
+
+    lines <- readLines(path, warn = FALSE)
+    labels <- list()
+    input_pattern <- "(?:selectInput|numericInput|radioButtons|sliderInput|checkboxInput|checkboxGroupInput|dateInput|fileInput|textInput)"
+    patterns <- c(
+      paste0(".*", input_pattern, "\\(\"([^\"]+)\"\\s*,\\s*label\\s*=\\s*h[1-6]\\(\"([^\"]+)\".*"),
+      paste0(".*", input_pattern, "\\(\"([^\"]+)\"\\s*,\\s*label\\s*=\\s*\"([^\"]+)\".*"),
+      paste0(".*", input_pattern, "\\(\"([^\"]+)\"\\s*,\\s*h[1-6]\\(\"([^\"]+)\".*"),
+      paste0(".*", input_pattern, "\\(\"([^\"]+)\"\\s*,\\s*\"([^\"]+)\".*")
+    )
+
+    for (line in lines) {
+      for (pattern in patterns) {
+        match <- regmatches(line, regexec(pattern, line, perl = TRUE))[[1]]
+
+        if (length(match) == 3) {
+          labels[[match[2]]] <- trimws(match[3])
+          break
+        }
+      }
+    }
+
+    unlist(labels, use.names = TRUE)
+  }
+
+  ui_input_labels <- extract_ui_input_labels("ui.R")
+
+  format_input_value <- function(value) {
+    if (is.null(value) || length(value) == 0) {
+      return("Not selected")
+    }
+
+    if (is.data.frame(value) && "name" %in% names(value)) {
+      value <- value$name
+    } else if (is.list(value) && !is.data.frame(value)) {
+      value <- unlist(value, use.names = FALSE)
+    }
+
+    if (is.null(value) || length(value) == 0) {
+      return("Not selected")
+    }
+
+    value <- value[!is.na(value)]
+
+    if (!length(value)) {
+      return("Not selected")
+    }
+
+    paste(as.character(value), collapse = ", ")
+  }
+
+  format_input_label <- function(input_id) {
+    default_if_missing(
+      ui_input_labels[[input_id]],
+      tools::toTitleCase(gsub("_", " ", input_id))
+    )
+  }
+
+  collect_parameters <- function(param_ids = character(0)) {
+    if (!length(param_ids)) {
+      return(character(0))
+    }
+
+    vapply(
+      param_ids,
+      function(input_id) {
+        paste0(
+          format_input_label(input_id),
+          ": ",
+          format_input_value(isolate(input[[input_id]]))
+        )
+      },
+      character(1)
+    )
+  }
+
+  build_run_card <- function(entry) {
+    params_text <- if (length(entry$parameters)) {
+      paste(entry$parameters, collapse = "\n")
+    } else {
+      "No parameters recorded."
+    }
+
+    div(
+      class = paste("run-log-card", status_class(entry$status)),
+      div(class = "run-log-title", format_scope(entry$menu, entry$tab)),
+      div(
+        class = "run-log-meta",
+        paste(
+          c(
+            format_timestamp(entry$timestamp),
+            if (!is.na(entry$run_id)) paste0("Run #", sprintf("%03d", entry$run_id)),
+            paste("Status:", entry$status)
+          ),
+          collapse = " | "
+        )
+      ),
+      div(
+        class = "run-log-message",
+        span(class = paste("run-status-badge", status_class(entry$status)), entry$status),
+        span(entry$message)
+      ),
+      tags$pre(class = "run-log-params", params_text)
+    )
+  }
+
+  run_history <- reactiveVal(list())
+  run_state <- reactiveValues(
+    counter = 0L,
+    current_status = "Idle",
+    current_menu = "",
+    current_tab = "No active analysis",
+    current_message = "Load data or submit an analysis to see progress here.",
+    current_parameters = character(0),
+    current_timestamp = Sys.time()
+  )
+  action_run_cache <- reactiveValues()
+
+  set_current_run_state <- function(status, menu = "", tab = "", message = "", parameters = character(0)) {
+    run_state$current_status <- status
+    run_state$current_menu <- default_if_missing(menu, "")
+    run_state$current_tab <- default_if_missing(tab, "No active analysis")
+    run_state$current_message <- default_if_missing(message, "")
+    run_state$current_parameters <- default_if_missing(parameters, character(0))
+    run_state$current_timestamp <- Sys.time()
+  }
+
+  append_run_log <- function(status, menu, tab, message, parameters = character(0), run_id = NA_integer_) {
+    entry <- list(
+      run_id = run_id,
+      timestamp = Sys.time(),
+      status = status,
+      menu = menu,
+      tab = tab,
+      message = message,
+      parameters = parameters
+    )
+
+    run_history(c(list(entry), run_history()))
+    invisible(entry)
+  }
+
+  tracked_actions <- list(
+    action_level = list(
+      menu = "Upload files",
+      tab = "Upload files",
+      task = "Data upload and preprocessing",
+      params = c("select_file_type", "file1", "file1_split", "metadata", "metadata_split", "select_RA_type"),
+      loading_detail = "Validating the uploaded inputs",
+      running_detail = "Loading and preparing the selected data"
+    ),
+    action_m1_bar_plot_group = list(
+      menu = "Distribution",
+      tab = "Group",
+      task = "Group abundance distribution",
+      params = c("input_RA_bar_plot_group", "select_plot_type_group", "color_palette_group", "top_n_bar_plot_group", "select_image_type_group")
+    ),
+    action_m1_bar_plot_individual = list(
+      menu = "Distribution",
+      tab = "Individual",
+      task = "Sample abundance distribution",
+      params = c("input_RA_bar_plot_individual", "select_plot_type_individual", "color_palette_individual", "top_n_bar_plot_individual", "select_image_type_individual")
+    ),
+    action_alpha_diversity = list(
+      menu = "Diversity",
+      tab = "Alpha",
+      task = "Alpha diversity analysis",
+      params = c("input_RA_Alpha", "select_alpha", "select_alpha_pvalue", "select_plot", "select_alpha_color_palette", "select_image_type_alpha")
+    ),
+    action_beta_diversity = list(
+      menu = "Diversity",
+      tab = "Beta",
+      task = "Beta diversity analysis",
+      params = c("input_RA_Beta", "select_beta", "adonis_permutations", "adonis_dissimilarities", "select_method", "select_beta_color_palette", "select_image_type_beta")
+    ),
+    action_pca = list(
+      menu = "Dimension reduction",
+      tab = "PCA-2D",
+      task = "PCA-2D analysis",
+      params = c("input_RA_pca", "select_pca_label", "select_pca_label_size", "select_pca_frame", "select_pca_color_palette", "select_image_type_pca")
+    ),
+    action_pca3d = list(
+      menu = "Dimension reduction",
+      tab = "PCA-3D",
+      task = "PCA-3D analysis",
+      params = c("input_RA_pca3d", "select_pca3d_color_palette")
+    ),
+    action_tsne = list(
+      menu = "Dimension reduction",
+      tab = "t-SNE",
+      task = "t-SNE analysis",
+      params = c("input_tsne", "select_tsne_method", "select_tsne_dimension", "select_tsne_color_palette", "select_image_type_tsne")
+    ),
+    action_umap = list(
+      menu = "Dimension reduction",
+      tab = "UMAP",
+      task = "UMAP analysis",
+      params = c("input_umap", "select_umap_method", "select_umap_kvalue", "select_umap_color_palette", "select_image_type_umap")
+    ),
+    action_taxa_condition_based_correlation = list(
+      menu = "Correlation",
+      tab = "Taxa-based",
+      task = "Taxa-condition correlation analysis",
+      params = c("input_taxa_condition_based_correlation", "input_taxa_condition_based_correlation2", "select_taxa_condition_based_correlation_method", "select_taxa_condition_based_correlation_label_size", "select_taxa_condition_geom_shape", "select_image_taxa_condition_based_correlation")
+    ),
+    action_samples_based_correlation = list(
+      menu = "Correlation",
+      tab = "Sample-based",
+      task = "Sample correlation analysis",
+      params = c("input_samples_based_correlation", "input_samples_based_correlation2", "select_samples_based_correlation_method", "select_samples_based_correlation_label_size", "select_sample_geom_shape", "select_image_type_samples_based_correlation")
+    ),
+    action_heatmap = list(
+      menu = "Heatmap",
+      tab = "Heatmap",
+      task = "Heatmap analysis",
+      params = c("input_heatmap", "heatmap_clustering_method_rows", "heatmap_clustering_method_columns", "heatmap_normalization", "heatmap_color_palette", "heatmap_row_names", "heatmap_row_names_size", "heatmap_column_names", "heatmap_column_names_size", "heatmap_row_dend", "heatmap_column_dend", "select_image_type_heatmap")
+    ),
+    action_wilcoxtest = list(
+      menu = "Differential abundance",
+      tab = "Wilcoxon Rank Sum test",
+      task = "Wilcoxon Rank Sum test",
+      params = c("input_wilcoxtest", "group1_wilcoxtest", "group2_wilcoxtest", "select_wilcoxtest_pvalue", "wilcoxtest_pvalue", "wilcox_color_palette", "select_wilcoxtest_plot", "select_image_type_wilcoxtest")
+    ),
+    action_ttest = list(
+      menu = "Differential abundance",
+      tab = "t-test",
+      task = "t-test",
+      params = c("input_ttest", "group1_ttest", "group2_ttest", "select_ttest_pvalue", "ttest_pvalue", "ttest_color_palette", "select_ttest_plot", "select_image_type_ttest")
+    ),
+    action_metagenomeseq = list(
+      menu = "Differential abundance",
+      tab = "metagenomeSeq",
+      task = "metagenomeSeq analysis",
+      params = c("input_RA_metagenomeseq", "group1_metagenomeseq", "group2_metagenomeseq", "select_metagenomeseq_pvalue", "metagenomeseq_pvalue", "metagenomeseq_color_palette", "select_metagenomeseq_plot", "select_image_type_metagenomeseq")
+    ),
+    action_deseq2 = list(
+      menu = "Differential abundance",
+      tab = "DESeq2",
+      task = "DESeq2 analysis",
+      params = c("input_RA_deseq2", "group1_deseq2", "group2_deseq2", "select_deseq2_pvalue", "deseq2_pvalue", "deseq2_color_palette", "select_deseq2_plot", "select_image_type_deseq2")
+    ),
+    action_LEfSe = list(
+      menu = "Differential abundance",
+      tab = "LEfSe",
+      task = "LEfSe analysis",
+      params = c("input_RA_LEfSe", "group1_LEfSe", "group2_LEfSe", "select_LEfSe_method", "select_LEfSe_pvalue", "select_LEfSe_threshold", "select_LEfSe_color_palette", "select_image_type_LEfSe")
+    ),
+    action_MaAsLin3 = list(
+      menu = "Differential abundance",
+      tab = "MaAsLin3",
+      task = "MaAsLin3 analysis",
+      params = c("input_RA_MaAsLin3", "group1_MaAsLin3", "group2_MaAsLin3", "select_MaAsLin3_normalization", "select_MaAsLin3_transformation", "select_MaAsLin3_correction", "select_MaAsLin3_pvalue")
+    ),
+    action_limma = list(
+      menu = "Differential abundance",
+      tab = "Limma-Voom",
+      task = "Limma-Voom analysis",
+      params = c("input_RA_limma", "group1_limma", "group2_limma", "select_limma_pvalue", "limma_pvalue", "limma_color_palette", "select_limma_plot", "select_image_type_limma")
+    ),
+    action_edger = list(
+      menu = "Differential abundance",
+      tab = "edgeR",
+      task = "edgeR analysis",
+      params = c("input_RA_edger", "group1_edger", "group2_edger", "select_edger_pvalue", "edger_pvalue", "edger_color_palette", "select_edger_plot", "select_image_type_edger")
+    ),
+    action_kruskal_wallis_test = list(
+      menu = "Differential abundance",
+      tab = "Kruskal-Wallis test",
+      task = "Kruskal-Wallis test",
+      params = c("input_kruskal_wallis_test", "select_kruskal_wallis_test_pvalue", "kruskal_wallis_test_pvalue", "kruskal_wallis_test_ad_hoc", "kruskal_wallis_test_color_palette", "kruskal_wallis_test_plot", "select_image_type_kruskal_wallis_test")
+    ),
+    action_anova = list(
+      menu = "Differential abundance",
+      tab = "ANOVA",
+      task = "ANOVA",
+      params = c("input_anova", "select_anova_pvalue", "anova_pvalue", "anova_ad_hoc", "anova_color_palette", "anova_plot", "select_image_type_anova")
+    )
+  )
+
+  run_with_tracking <- function(action_id, runner) {
+    cfg <- tracked_actions[[action_id]]
+
+    if (is.null(cfg)) {
+      stop("No tracking configuration found for action: ", action_id)
+    }
+
+    action_click <- isolate(input[[action_id]])
+    cache_key <- paste(action_id, action_click, sep = "::")
+    failure_notification_id <- paste0("run-failed-", action_id)
+    cached_run <- isolate(action_run_cache[[cache_key]])
+
+    if (!is.null(cached_run)) {
+      if (identical(cached_run$status, "success")) {
+        return(cached_run$value)
+      }
+
+      validate(need(FALSE, cached_run$message))
+    }
+
+    run_id <- isolate(run_state$counter) + 1L
+    params <- collect_parameters(cfg$params)
+    loading_message <- default_if_missing(cfg$loading_detail, paste("Loading", tolower(cfg$task), "..."))
+    running_message <- default_if_missing(cfg$running_detail, paste("Running", tolower(cfg$task), "..."))
+    completed_message <- paste(cfg$task, "completed successfully.")
+    progress_title <- paste(format_scope(cfg$menu, cfg$tab), "Running")
+
+    run_state$counter <- run_id
+    removeNotification(failure_notification_id)
+    set_current_run_state("Loading", cfg$menu, cfg$tab, loading_message, params)
+    append_run_log("Loading", cfg$menu, cfg$tab, loading_message, params, run_id)
+
+    tryCatch({
+      progress <- shiny::Progress$new(session, min = 0, max = 1, style = "notification")
+      on.exit(progress$close(), add = TRUE)
+      progress$set(message = progress_title, detail = loading_message, value = 0)
+      progress$inc(0.2, detail = loading_message)
+      
+      result <- {
+        set_current_run_state("Running", cfg$menu, cfg$tab, running_message, params)
+        append_run_log("Running", cfg$menu, cfg$tab, running_message, params, run_id)
+        progress$inc(0.55, detail = running_message)
+        result_value <- runner()
+        progress$inc(0.25, detail = "Completed successfully.")
+        result_value
+      }
+
+      action_run_cache[[cache_key]] <- list(status = "success", value = result)
+      set_current_run_state("Completed successfully", cfg$menu, cfg$tab, completed_message, params)
+      append_run_log("Completed successfully", cfg$menu, cfg$tab, completed_message, params, run_id)
+      removeNotification(failure_notification_id)
+      showNotification(completed_message, type = "message", duration = 5)
+      result
+    }, error = function(err) {
+      failed_message <- if (inherits(err, "shiny.silent.error")) {
+        paste(cfg$task, "needs valid input before it can run.")
+      } else {
+        paste(cfg$task, "failed:", conditionMessage(err))
+      }
+
+      action_run_cache[[cache_key]] <- list(status = "failed", message = failed_message)
+      set_current_run_state("Failed", cfg$menu, cfg$tab, failed_message, params)
+      append_run_log("Failed", cfg$menu, cfg$tab, failed_message, params, run_id)
+      showNotification(
+        failed_message,
+        id = failure_notification_id,
+        type = if (inherits(err, "shiny.silent.error")) "warning" else "error",
+        duration = NULL,
+        closeButton = TRUE
+      )
+      
+      validate(need(FALSE, failed_message))
+    })
+  }
+
+  output$run_status_panel <- renderUI({
+    build_run_card(list(
+      run_id = if (run_state$counter > 0) run_state$counter else NA_integer_,
+      timestamp = run_state$current_timestamp,
+      status = run_state$current_status,
+      menu = run_state$current_menu,
+      tab = run_state$current_tab,
+      message = run_state$current_message,
+      parameters = run_state$current_parameters
+    ))
+  })
+
+  output$run_log_ui <- renderUI({
+    entries <- run_history()
+
+    if (!length(entries)) {
+      return(div(class = "run-log-empty", "Run history will appear here after data loading or analysis submission."))
+    }
+
+    do.call(tagList, lapply(entries, build_run_card))
+  })
+
+  observeEvent(input$main_navbar, ignoreInit = TRUE, {
+    selected_tab <- input$main_navbar
+
+    if (is.null(selected_tab) || !nzchar(selected_tab) || identical(selected_tab, "Run Log")) {
+      return()
+    }
+
+    append_run_log(
+      status = "Viewed",
+      menu = "Navigation",
+      tab = as.character(selected_tab),
+      message = paste("Opened", as.character(selected_tab), "tab."),
+      parameters = character(0)
+    )
+  })
   
 ######session info
   
@@ -60,65 +491,67 @@ server <- function(input, output, session) {
   })
   
   dataInput_RA_level <- eventReactive(input$action_level, {
-    # Check the selected file type
-    if (input$select_file_type %in% c("Megan", "check", "qiime_format")) {
-      inFile1 <- input$file1
-      inFile2 <- input$metadata
-      sep <- input$file1_split
-      sep1 <- input$metadata_split
-      type <- input$select_file_type
-      
-      # Check file extension and validate
-      ext <- tools::file_ext(inFile1$name)
-      ext1 <- tools::file_ext(inFile2$name)
-      
-      req(inFile1, inFile2)  # Ensure files are uploaded
-      
-      validate(
-        need(
-          ((type %in% c("Megan", "check") && ext == "tsv" && sep == "\t") ||
-             (type == "qiime_format" && ext == "csv" && sep == ",")),
-          "Please select the proper input format and 'Fields separated by'."
-        ),
-        need(
-          ((type %in% c("Megan", "check") && ext1 == "tsv" && sep1 == "\t") ||
-             (type == "qiime_format" && ext1 == "csv" && sep1 == ",")),
-          "Please select the proper input format and 'Fields separated by'."
+    run_with_tracking("action_level", function() {
+      # Check the selected file type
+      if (input$select_file_type %in% c("Megan", "check", "qiime_format")) {
+        inFile1 <- input$file1
+        inFile2 <- input$metadata
+        sep <- input$file1_split
+        sep1 <- input$metadata_split
+        type <- input$select_file_type
+        
+        req(inFile1, inFile2)  # Ensure files are uploaded
+        
+        # Check file extension and validate
+        ext <- tools::file_ext(inFile1$name)
+        ext1 <- tools::file_ext(inFile2$name)
+
+        validate(
+          need(
+            ((type %in% c("Megan", "check") && ext == "tsv" && sep == "\t") ||
+               (type == "qiime_format" && ext == "csv" && sep == ",")),
+            "Please select the proper input format and 'Fields separated by'."
+          ),
+          need(
+            ((type %in% c("Megan", "check") && ext1 == "tsv" && sep1 == "\t") ||
+               (type == "qiime_format" && ext1 == "csv" && sep1 == ",")),
+            "Please select the proper input format and 'Fields separated by'."
+          )
         )
-      )
-    } else if (input$select_file_type == "example") {
-      # Load example data
-      inFile1 <- "www/example_data/Megan_WGS_output.tsv"
-      inFile2 <- "www/example_data/Megan_WGS_metadata.tsv"
-    } else {
-      return(list("Input is missing", "Input is missing", 30, "Input is missing"))
-    }
-    
-    # Check if files are uploaded
-    if (is.null(inFile1) || is.null(inFile2)) {
-      return(list("Input is missing", "Input is missing", 30, "Input is missing"))
-    }
-    
-    # Call the data_input_RA function with provided inputs
-    if (input$select_file_type == "example") {
-      data_input_RA(
-        Input = inFile1,
-        Index = inFile2,
-        type = input$select_RA_type,
-        # sep = sep,
-        # sep1 = sep1,
-        file_type = input$select_file_type
-      )
-    } else {
-      data_input_RA(
-        Input = inFile1$datapath,
-        Index = inFile2$datapath,
-        type = input$select_RA_type,
-        sep = input$file1_split,
-        sep1 = input$metadata_split,
-        file_type = input$select_file_type
-      )
-    }
+      } else if (input$select_file_type == "example") {
+        # Load example data
+        inFile1 <- "www/example_data/Megan_WGS_output.tsv"
+        inFile2 <- "www/example_data/Megan_WGS_metadata.tsv"
+      } else {
+        return(list("Input is missing", "Input is missing", 30, "Input is missing"))
+      }
+      
+      # Check if files are uploaded
+      if (is.null(inFile1) || is.null(inFile2)) {
+        return(list("Input is missing", "Input is missing", 30, "Input is missing"))
+      }
+      
+      # Call the data_input_RA function with provided inputs
+      if (input$select_file_type == "example") {
+        data_input_RA(
+          Input = inFile1,
+          Index = inFile2,
+          type = input$select_RA_type,
+          # sep = sep,
+          # sep1 = sep1,
+          file_type = input$select_file_type
+        )
+      } else {
+        data_input_RA(
+          Input = inFile1$datapath,
+          Index = inFile2$datapath,
+          type = input$select_RA_type,
+          sep = input$file1_split,
+          sep1 = input$metadata_split,
+          file_type = input$select_file_type
+        )
+      }
+    })
   })
   
   
@@ -175,8 +608,10 @@ server <- function(input, output, session) {
   })
   
   data_bar_plot_group <- eventReactive(input$action_m1_bar_plot_group,{
-    source("scripts/group_bar_plot.R")
-    Bar_Plot_Group_OTU(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[5]], color_palette_group = input$color_palette_group, n_top = input$top_n_bar_plot_group, names = dataInput_RA_level()[[6]], plot_type=input$select_plot_type_group)
+    run_with_tracking("action_m1_bar_plot_group", function() {
+      source("scripts/group_bar_plot.R")
+      Bar_Plot_Group_OTU(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[5]], color_palette_group = input$color_palette_group, n_top = input$top_n_bar_plot_group, names = dataInput_RA_level()[[6]], plot_type=input$select_plot_type_group)
+    })
   })
   
   output$bar_plot_group <- renderPlot({
@@ -200,8 +635,10 @@ server <- function(input, output, session) {
 
   
   data_bar_plot_individual <- eventReactive(input$action_m1_bar_plot_individual,{
-    source("scripts/individual_bar_plot.R")
-    Bar_Plot_Individual_OTU(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], color_palette_individual = input$color_palette_individual, n_top = input$top_n_bar_plot_individual, names = dataInput_RA_level()[[6]], plot_type=input$select_plot_type_individual)
+    run_with_tracking("action_m1_bar_plot_individual", function() {
+      source("scripts/individual_bar_plot.R")
+      Bar_Plot_Individual_OTU(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], color_palette_individual = input$color_palette_individual, n_top = input$top_n_bar_plot_individual, names = dataInput_RA_level()[[6]], plot_type=input$select_plot_type_individual)
+    })
   })
   
   output$bar_plot_individual <- renderPlot({
@@ -230,8 +667,10 @@ server <- function(input, output, session) {
     })
   
   data_heatmap <- eventReactive(input$action_heatmap,{
-    source("scripts/heatmap.R")
-    heatmap_abundance(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], heatmap_clustering_method_rows = input$heatmap_clustering_method_rows, heatmap_clustering_method_columns = input$heatmap_clustering_method_columns, heatmap_color_palette = input$heatmap_color_palette, heatmap_normalization = input$heatmap_normalization, heatmap_row_names = input$heatmap_row_names, heatmap_row_names_size = input$heatmap_row_names_size, heatmap_column_names = input$heatmap_column_names, heatmap_column_names_size = input$heatmap_column_names_size, heatmap_row_dend = input$heatmap_row_dend, heatmap_column_dend = input$heatmap_column_dend)
+    run_with_tracking("action_heatmap", function() {
+      source("scripts/heatmap.R")
+      heatmap_abundance(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], heatmap_clustering_method_rows = input$heatmap_clustering_method_rows, heatmap_clustering_method_columns = input$heatmap_clustering_method_columns, heatmap_color_palette = input$heatmap_color_palette, heatmap_normalization = input$heatmap_normalization, heatmap_row_names = input$heatmap_row_names, heatmap_row_names_size = input$heatmap_row_names_size, heatmap_column_names = input$heatmap_column_names, heatmap_column_names_size = input$heatmap_column_names_size, heatmap_row_dend = input$heatmap_row_dend, heatmap_column_dend = input$heatmap_column_dend)
+    })
   })
   
   output$plot_heatmap <- renderPlot({
@@ -258,9 +697,11 @@ server <- function(input, output, session) {
   })
   
   data_Alpha_Div_plot <- eventReactive(input$action_alpha_diversity,{
-    source("scripts/alpha_diversity.R")
-    labels_data_type<- input$file1$name
-    alpha_diversity_boxplot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], index_method = input$select_alpha, select_alpha_color_palette = input$select_alpha_color_palette, plot_method = input$select_plot, pvalue=input$select_alpha_pvalue)
+    run_with_tracking("action_alpha_diversity", function() {
+      source("scripts/alpha_diversity.R")
+      labels_data_type<- input$file1$name
+      alpha_diversity_boxplot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], index_method = input$select_alpha, select_alpha_color_palette = input$select_alpha_color_palette, plot_method = input$select_plot, pvalue=input$select_alpha_pvalue)
+    })
   })
   
   output$boxplot_Alpha_Div <- renderPlot({
@@ -301,9 +742,11 @@ server <- function(input, output, session) {
   })
   
   data_Beta_Div_plot <- eventReactive(input$action_beta_diversity,{
-    source("scripts/beta_diversity.R")
-    labels_data_type<- input$file1$name
-    beta_diversity_boxplot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], select_beta_color_palette=input$select_beta_color_palette, index_method = input$select_beta, plot_method = input$select_method, adonis_dissimilarities = input$adonis_dissimilarities, adonis_permutations = input$adonis_permutations)
+    run_with_tracking("action_beta_diversity", function() {
+      source("scripts/beta_diversity.R")
+      labels_data_type<- input$file1$name
+      beta_diversity_boxplot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], select_beta_color_palette=input$select_beta_color_palette, index_method = input$select_beta, plot_method = input$select_method, adonis_dissimilarities = input$adonis_dissimilarities, adonis_permutations = input$adonis_permutations)
+    })
   })
   
   output$boxplot_Beta_Div <- renderPlot({
@@ -352,9 +795,11 @@ server <- function(input, output, session) {
   
   
   data_pca_plot <- eventReactive(input$action_pca,{
-    source("scripts/pca_plot.R")
-    labels_data_type<- input$file1$name
-    pca_plot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], pca_label1 = input$select_pca_label, pca_label_size = input$select_pca_label_size, pca_frame = input$select_pca_frame, select_pca_color_palette=input$select_pca_color_palette)
+    run_with_tracking("action_pca", function() {
+      source("scripts/pca_plot.R")
+      labels_data_type<- input$file1$name
+      pca_plot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], pca_label1 = input$select_pca_label, pca_label_size = input$select_pca_label_size, pca_frame = input$select_pca_frame, select_pca_color_palette=input$select_pca_color_palette)
+    })
   })
   
   output$plot_pca <- renderPlot({
@@ -391,9 +836,11 @@ server <- function(input, output, session) {
   })
   
   data_pca3d_table <- eventReactive(input$action_pca3d,{
-    source("scripts/pca3d_plot.R")
-    labels_data_type<- input$file1$name
-    pca3d_plot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], select_pca3d_color_palette=input$select_pca3d_color_palette)
+    run_with_tracking("action_pca3d", function() {
+      source("scripts/pca3d_plot.R")
+      labels_data_type<- input$file1$name
+      pca3d_plot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], select_pca3d_color_palette=input$select_pca3d_color_palette)
+    })
   })
   
   output$pca3d_table <- renderDataTable(DT::datatable(data_pca3d_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
@@ -423,9 +870,11 @@ server <- function(input, output, session) {
   })
   
   data_tsne_table <- eventReactive(input$action_tsne,{
-    source("scripts/tsne.R")
-    labels_data_type<- input$file1$name
-    tsne_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], method = input$select_tsne_method, dimension = input$select_tsne_dimension, select_tsne_color_palette = input$select_tsne_color_palette)
+    run_with_tracking("action_tsne", function() {
+      source("scripts/tsne.R")
+      labels_data_type<- input$file1$name
+      tsne_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], method = input$select_tsne_method, dimension = input$select_tsne_dimension, select_tsne_color_palette = input$select_tsne_color_palette)
+    })
   })
   
   output$tsne_table <- renderDataTable(DT::datatable(data_tsne_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
@@ -464,9 +913,11 @@ server <- function(input, output, session) {
   })
   
   data_umap_table <- eventReactive(input$action_umap,{
-    source("scripts/umap.R")
-    labels_data_type<- input$file1$name
-    umap_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], method = input$select_umap_method, kvalue = input$select_umap_kvalue, select_umap_color_palette=input$select_umap_color_palette)
+    run_with_tracking("action_umap", function() {
+      source("scripts/umap.R")
+      labels_data_type<- input$file1$name
+      umap_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], method = input$select_umap_method, kvalue = input$select_umap_kvalue, select_umap_color_palette=input$select_umap_color_palette)
+    })
   })
   
   output$umap_table <- renderDataTable(DT::datatable(data_umap_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
@@ -565,9 +1016,11 @@ server <- function(input, output, session) {
   })
   
   data_samples_based_correlation_table <- eventReactive(input$action_samples_based_correlation,{
-    source("scripts/samples_based_correlation.R")
-    labels_data_type<- input$file1$name
-    samples_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$input_samples_based_correlation2, method = input$select_samples_based_correlation_method, labe_size =input$select_samples_based_correlation_label_size, select_sample_geom_shape=input$select_sample_geom_shape)
+    run_with_tracking("action_samples_based_correlation", function() {
+      source("scripts/samples_based_correlation.R")
+      labels_data_type<- input$file1$name
+      samples_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$input_samples_based_correlation2, method = input$select_samples_based_correlation_method, labe_size =input$select_samples_based_correlation_label_size, select_sample_geom_shape=input$select_sample_geom_shape)
+    })
   })
   
   output$samples_based_correlation_table <- renderDataTable(DT::datatable(data_samples_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
@@ -616,9 +1069,11 @@ server <- function(input, output, session) {
   })
   
   data_taxa_condition_based_correlation_table <- eventReactive(input$action_taxa_condition_based_correlation,{
-    source("scripts/taxa_condition_based_correlation.R")
-    labels_data_type<- input$file1$name
-    taxa_condition_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$input_taxa_condition_based_correlation2, method = input$select_taxa_condition_based_correlation_method, labe_size =input$select_taxa_condition_based_correlation_label_size,  select_taxa_condition_geom_shape=input$select_taxa_condition_geom_shape)
+    run_with_tracking("action_taxa_condition_based_correlation", function() {
+      source("scripts/taxa_condition_based_correlation.R")
+      labels_data_type<- input$file1$name
+      taxa_condition_based_correlation_plot_table(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$input_taxa_condition_based_correlation2, method = input$select_taxa_condition_based_correlation_method, labe_size =input$select_taxa_condition_based_correlation_label_size,  select_taxa_condition_geom_shape=input$select_taxa_condition_geom_shape)
+    })
   })
   
   output$taxa_condition_based_correlation_table <- renderDataTable(DT::datatable(data_taxa_condition_based_correlation_table()[[2]],options = list(pageLength = 15,scrollX = TRUE)))
@@ -713,10 +1168,12 @@ server <- function(input, output, session) {
   })
   
   data_wilcoxtest <- eventReactive(input$action_wilcoxtest,{
-    source("scripts/wilcoxtest.R")
-    labels_data_type<- input$file1$name
-    wilcoxtest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_wilcoxtest_pvalue, group1 = input$group1_wilcoxtest, group2 = input$group2_wilcoxtest,  plot_method = input$select_wilcoxtest_plot, alpha = input$wilcoxtest_pvalue, wilcox_color_palette=input$wilcox_color_palette)
+    run_with_tracking("action_wilcoxtest", function() {
+      source("scripts/wilcoxtest.R")
+      labels_data_type<- input$file1$name
+      wilcoxtest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_wilcoxtest_pvalue, group1 = input$group1_wilcoxtest, group2 = input$group2_wilcoxtest,  plot_method = input$select_wilcoxtest_plot, alpha = input$wilcoxtest_pvalue, wilcox_color_palette=input$wilcox_color_palette)
     })
+  })
   
   output$text_wilcoxtest_level<- renderText({
     paste(data_wilcoxtest()[[1]])
@@ -803,9 +1260,11 @@ server <- function(input, output, session) {
   })
   
   data_ttest <- eventReactive(input$action_ttest,{
-    source("scripts/ttest.R")
-    labels_data_type<- input$file1$name
-    ttest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_ttest_pvalue, group1 = input$group1_ttest, group2 = input$group2_ttest,  plot_method = input$select_ttest_plot, alpha = input$ttest_pvalue, ttest_color_palette = input$ttest_color_palette)
+    run_with_tracking("action_ttest", function() {
+      source("scripts/ttest.R")
+      labels_data_type<- input$file1$name
+      ttest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_ttest_pvalue, group1 = input$group1_ttest, group2 = input$group2_ttest,  plot_method = input$select_ttest_plot, alpha = input$ttest_pvalue, ttest_color_palette = input$ttest_color_palette)
+    })
   })
   
   output$text_ttest_level<- renderText({
@@ -893,9 +1352,11 @@ server <- function(input, output, session) {
   
   
   data_metagenomeseq <- eventReactive(input$action_metagenomeseq,{
-    source("scripts/metagenomeseq.R")
-    labels_data_type<- input$file1$name
-    metagenomeseq_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_metagenomeseq_pvalue, group1 = input$group1_metagenomeseq, group2 = input$group2_metagenomeseq,  plot_method = input$select_metagenomeseq_plot, alpha = input$metagenomeseq_pvalue, metagenomeseq_color_palette = input$metagenomeseq_color_palette)
+    run_with_tracking("action_metagenomeseq", function() {
+      source("scripts/metagenomeseq.R")
+      labels_data_type<- input$file1$name
+      metagenomeseq_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_metagenomeseq_pvalue, group1 = input$group1_metagenomeseq, group2 = input$group2_metagenomeseq,  plot_method = input$select_metagenomeseq_plot, alpha = input$metagenomeseq_pvalue, metagenomeseq_color_palette = input$metagenomeseq_color_palette)
+    })
   })
   
   output$text_metagenomeseq_level<- renderText({
@@ -977,9 +1438,11 @@ server <- function(input, output, session) {
   
   
   data_deseq2 <- eventReactive(input$action_deseq2,{
-    source("scripts/deseq2.R")
-    labels_data_type<- input$file1$name
-    deseq2_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_deseq2_pvalue, group1 = input$group1_deseq2, group2 = input$group2_deseq2,  plot_method = input$select_deseq2_plot, alpha = input$deseq2_pvalue, deseq2_color_palette = input$deseq2_color_palette)
+    run_with_tracking("action_deseq2", function() {
+      source("scripts/deseq2.R")
+      labels_data_type<- input$file1$name
+      deseq2_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_deseq2_pvalue, group1 = input$group1_deseq2, group2 = input$group2_deseq2,  plot_method = input$select_deseq2_plot, alpha = input$deseq2_pvalue, deseq2_color_palette = input$deseq2_color_palette)
+    })
   })
   
   output$text_deseq2_level<- renderText({
@@ -1067,9 +1530,11 @@ server <- function(input, output, session) {
   
   
   data_LEfSe <- eventReactive(input$action_LEfSe,{
-    source("scripts/LEfSe.R")
-    labels_data_type<- input$file1$name
-    LEfSe_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$group1_LEfSe, group2 = input$group2_LEfSe,  select_LEfSe_method = input$select_LEfSe_method, select_LEfSe_pvalue = input$select_LEfSe_pvalue, select_LEfSe_threshold = input$select_LEfSe_threshold, select_LEfSe_color_palette = input$select_LEfSe_color_palette)
+    run_with_tracking("action_LEfSe", function() {
+      source("scripts/LEfSe.R")
+      labels_data_type<- input$file1$name
+      LEfSe_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$group1_LEfSe, group2 = input$group2_LEfSe,  select_LEfSe_method = input$select_LEfSe_method, select_LEfSe_pvalue = input$select_LEfSe_pvalue, select_LEfSe_threshold = input$select_LEfSe_threshold, select_LEfSe_color_palette = input$select_LEfSe_color_palette)
+    })
   })
   
   output$text_LEfSe_level<- renderText({
@@ -1140,31 +1605,28 @@ server <- function(input, output, session) {
     updateSelectInput(session, "group2_MaAsLin3", choices = label_condition2)
   })
   
-  observeEvent(input$action_MaAsLin3, {
-  # List of files and folders to delete
-  files_to_delete <- c(
-    "www/hmp2_output",
-    "www/hmp2_output.zip"
-  )
-  
-  for (file in files_to_delete) {
-    full_path <- file.path(getwd(), file)
-    
-    if (file.exists(full_path)) {
-      # Use unlink with recursive = TRUE to delete folders and their contents
-      unlink(full_path, recursive = TRUE, force = TRUE)
-      cat("Deleted:", full_path, "\n")
-    } else {
-      cat("File or folder not found, skipping:", full_path, "\n")
-    }
-  }
-})
-  # 
-  
   data_MaAsLin3 <- eventReactive(input$action_MaAsLin3,{
-    source("scripts/MaAsLin3.R")
-    labels_data_type<- input$file1$name
-    MaAsLin3_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$group1_MaAsLin3, group2 = input$group2_MaAsLin3,  select_MaAsLin3_normalization = input$select_MaAsLin3_normalization, select_MaAsLin3_transformation = input$select_MaAsLin3_transformation, select_MaAsLin3_correction = input$select_MaAsLin3_correction, select_MaAsLin3_pvalue = input$select_MaAsLin3_pvalue)
+    run_with_tracking("action_MaAsLin3", function() {
+      files_to_delete <- c(
+        "www/hmp2_output",
+        "www/hmp2_output.zip"
+      )
+
+      for (file in files_to_delete) {
+        full_path <- file.path(getwd(), file)
+
+        if (file.exists(full_path)) {
+          unlink(full_path, recursive = TRUE, force = TRUE)
+          cat("Deleted:", full_path, "\n")
+        } else {
+          cat("File or folder not found, skipping:", full_path, "\n")
+        }
+      }
+
+      source("scripts/MaAsLin3.R")
+      labels_data_type<- input$file1$name
+      MaAsLin3_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], group1 = input$group1_MaAsLin3, group2 = input$group2_MaAsLin3,  select_MaAsLin3_normalization = input$select_MaAsLin3_normalization, select_MaAsLin3_transformation = input$select_MaAsLin3_transformation, select_MaAsLin3_correction = input$select_MaAsLin3_correction, select_MaAsLin3_pvalue = input$select_MaAsLin3_pvalue)
+    })
   })
   
   output$text_MaAsLin3_level<- renderText({
@@ -1222,9 +1684,11 @@ server <- function(input, output, session) {
   
   
   data_limma <- eventReactive(input$action_limma,{
-    source("scripts/limma.R")
-    labels_data_type<- input$file1$name
-    limma_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_limma_pvalue, group1 = input$group1_limma, group2 = input$group2_limma,  plot_method = input$select_limma_plot, alpha = input$limma_pvalue, limma_color_palette = input$limma_color_palette)
+    run_with_tracking("action_limma", function() {
+      source("scripts/limma.R")
+      labels_data_type<- input$file1$name
+      limma_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_limma_pvalue, group1 = input$group1_limma, group2 = input$group2_limma,  plot_method = input$select_limma_plot, alpha = input$limma_pvalue, limma_color_palette = input$limma_color_palette)
+    })
   })
   
   output$text_limma_level<- renderText({
@@ -1307,9 +1771,11 @@ server <- function(input, output, session) {
   
   
   data_edger <- eventReactive(input$action_edger,{
-    source("scripts/edger.R")
-    labels_data_type<- input$file1$name
-    edger_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_edger_pvalue, group1 = input$group1_edger, group2 = input$group2_edger, plot_method = input$select_edger_plot, alpha = input$edger_pvalue, edger_color_palette = input$edger_color_palette)
+    run_with_tracking("action_edger", function() {
+      source("scripts/edger.R")
+      labels_data_type<- input$file1$name
+      edger_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_edger_pvalue, group1 = input$group1_edger, group2 = input$group2_edger, plot_method = input$select_edger_plot, alpha = input$edger_pvalue, edger_color_palette = input$edger_color_palette)
+    })
   })
   
   output$text_edger_level<- renderText({
@@ -1365,9 +1831,11 @@ server <- function(input, output, session) {
   })
   
   data_kruskal_wallis_test <- eventReactive(input$action_kruskal_wallis_test,{
-    source("scripts/kruskal_wallis_test.R")
-    labels_data_type<- input$file1$name
-    kruskal_wallis_test_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_kruskal_wallis_test_pvalue, ad_hoc = input$kruskal_wallis_test_ad_hoc, plot_method = input$kruskal_wallis_test_plot, alpha = input$kruskal_wallis_test_pvalue, kruskal_wallis_test_color_palette = input$kruskal_wallis_test_color_palette)
+    run_with_tracking("action_kruskal_wallis_test", function() {
+      source("scripts/kruskal_wallis_test.R")
+      labels_data_type<- input$file1$name
+      kruskal_wallis_test_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_kruskal_wallis_test_pvalue, ad_hoc = input$kruskal_wallis_test_ad_hoc, plot_method = input$kruskal_wallis_test_plot, alpha = input$kruskal_wallis_test_pvalue, kruskal_wallis_test_color_palette = input$kruskal_wallis_test_color_palette)
+    })
   })
   
   output$text_kruskal_wallis_test_level<- renderText({
@@ -1429,9 +1897,11 @@ server <- function(input, output, session) {
   })
   
   data_anova <- eventReactive(input$action_anova,{
-    source("scripts/anova.R")
-    labels_data_type<- input$file1$name
-    anova_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_anova_pvalue, ad_hoc = input$anova_ad_hoc, plot_method = input$anova_plot, alpha = input$anova_pvalue, anova_color_palette = input$anova_color_palette)
+    run_with_tracking("action_anova", function() {
+      source("scripts/anova.R")
+      labels_data_type<- input$file1$name
+      anova_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_anova_pvalue, ad_hoc = input$anova_ad_hoc, plot_method = input$anova_plot, alpha = input$anova_pvalue, anova_color_palette = input$anova_color_palette)
+    })
   })
   
   output$text_anova_level<- renderText({

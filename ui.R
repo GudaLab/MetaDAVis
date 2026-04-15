@@ -30,6 +30,147 @@ shinyUI(
     navbarPage(
     theme = shinytheme("cerulean"),
     "",
+    id = "main_navbar",
+    header = tagList(
+      tags$head(
+        tags$style(HTML("
+          .run-status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin-right: 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+          }
+          .run-status-badge.idle,
+          .run-status-badge.viewed {
+            background: #e5e7eb;
+            color: #374151;
+          }
+          .run-status-badge.loading,
+          .run-status-badge.running {
+            background: #fef3c7;
+            color: #92400e;
+          }
+          .run-status-badge.completed-successfully {
+            background: #dcfce7;
+            color: #166534;
+          }
+          .run-status-badge.failed {
+            background: #fee2e2;
+            color: #991b1b;
+          }
+          .run-log-card {
+            margin-bottom: 14px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: 1px solid #d9e2ef;
+            border-left: 5px solid #94a3b8;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+          }
+          .run-log-card.loading,
+          .run-log-card.running {
+            border-left-color: #f59e0b;
+          }
+          .run-log-card.completed-successfully {
+            border-left-color: #16a34a;
+          }
+          .run-log-card.failed {
+            border-left-color: #dc2626;
+          }
+          .run-log-card.viewed {
+            border-left-color: #64748b;
+          }
+          .run-log-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+          }
+          .run-log-meta {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 8px;
+          }
+          .run-log-message {
+            margin-bottom: 10px;
+          }
+          .run-log-params {
+            margin: 0;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: #f8fafc;
+            white-space: pre-wrap;
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 12px;
+          }
+          .run-log-empty {
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+          }
+          .shiny-notification-panel {
+            top: auto !important;
+            right: 18px !important;
+            bottom: 18px !important;
+            left: auto !important;
+            width: 320px !important;
+            max-width: calc(100vw - 24px);
+            z-index: 2050;
+          }
+          .shiny-notification {
+            width: 320px !important;
+            max-width: calc(100vw - 24px) !important;
+            padding: 10px 12px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18) !important;
+          }
+          .shiny-progress-notification {
+            border-left: 4px solid #0ea5e9 !important;
+          }
+          .shiny-progress-notification .progress {
+            height: 6px !important;
+            margin-bottom: 8px !important;
+            border-radius: 999px;
+          }
+          .shiny-progress-notification .progress-text .progress-message {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+          }
+          .shiny-progress-notification .progress-text .progress-detail {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #64748b;
+          }
+          .shiny-notification-message {
+            border-left: 4px solid #16a34a !important;
+          }
+          .shiny-notification-warning {
+            border-left: 4px solid #d97706 !important;
+          }
+          .shiny-notification-error {
+            border-left: 4px solid #dc2626 !important;
+          }
+          @media (max-width: 767px) {
+            .shiny-notification-panel {
+              right: 10px !important;
+              bottom: 10px !important;
+              width: calc(100vw - 20px) !important;
+            }
+            .shiny-notification {
+              width: calc(100vw - 20px) !important;
+            }
+          }
+        "))
+      )
+    ),
     tabPanel(
       "MetaDAVis",
 	  tags$script(inactivity),
@@ -1138,6 +1279,15 @@ navbarMenu("Differential abundance",
                ),
              ),
            ),
+),
+tabPanel(
+  "Run Log",
+  h3("Run Status"),
+  uiOutput("run_status_panel"),
+  hr(),
+  h3("Run History"),
+  p("Each entry records the application tab or menu, the run status, and the selected parameters using the labels defined in ui.R."),
+  uiOutput("run_log_ui")
 ),
 tabPanel(
   "Session Info",
