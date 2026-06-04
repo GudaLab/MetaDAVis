@@ -180,6 +180,7 @@ server <- function(input, output, session) {
     current_timestamp = Sys.time()
   )
   action_run_cache <- reactiveValues()
+  completed_actions <- reactiveVal(character(0))
 
   set_current_run_state <- function(status, menu = "", tab = "", message = "", parameters = character(0)) {
     run_state$current_status <- status
@@ -203,6 +204,14 @@ server <- function(input, output, session) {
 
     run_history(c(list(entry), run_history()))
     invisible(entry)
+  }
+
+  mark_action_completed <- function(action_id) {
+    completed_actions(unique(c(isolate(completed_actions()), action_id)))
+  }
+
+  mark_action_incomplete <- function(action_id) {
+    completed_actions(setdiff(isolate(completed_actions()), action_id))
   }
 
   tracked_actions <- list(
@@ -356,9 +365,11 @@ server <- function(input, output, session) {
 
     if (!is.null(cached_run)) {
       if (identical(cached_run$status, "success")) {
+        mark_action_completed(action_id)
         return(cached_run$value)
       }
 
+      mark_action_incomplete(action_id)
       validate(need(FALSE, cached_run$message))
     }
 
@@ -390,6 +401,7 @@ server <- function(input, output, session) {
       }
 
       action_run_cache[[cache_key]] <- list(status = "success", value = result)
+      mark_action_completed(action_id)
       set_current_run_state("Completed successfully", cfg$menu, cfg$tab, completed_message, params)
       append_run_log("Completed successfully", cfg$menu, cfg$tab, completed_message, params, run_id)
       removeNotification(failure_notification_id)
@@ -403,6 +415,7 @@ server <- function(input, output, session) {
       }
 
       action_run_cache[[cache_key]] <- list(status = "failed", message = failed_message)
+      mark_action_incomplete(action_id)
       set_current_run_state("Failed", cfg$menu, cfg$tab, failed_message, params)
       append_run_log("Failed", cfg$menu, cfg$tab, failed_message, params, run_id)
       showNotification(
@@ -1953,6 +1966,723 @@ server <- function(input, output, session) {
       ggsave(file,plot = data_anova()[[6]], width = input$Boxplot_anova_output_width, height = input$Boxplot_anova_output_height, dpi = input$Boxplot_anova_output_dpi, units = "in")
     }
   )    
+
+  ###########################
+  ##    Bulk Download ZIP   ##
+  ###########################
+
+  as_bulk_fun <- function(value) {
+    if (is.function(value)) {
+      return(value)
+    }
+
+    function() value
+  }
+
+  bulk_table_item <- function(action, path, filename, data, row_names = TRUE) {
+    list(
+      type = "table",
+      action = action,
+      path = path,
+      filename = as_bulk_fun(filename),
+      data = data,
+      row_names = row_names
+    )
+  }
+
+  bulk_plot_item <- function(action, path, filename_base, plot, width, height, dpi) {
+    list(
+      type = "plot",
+      action = action,
+      path = path,
+      filename_base = as_bulk_fun(filename_base),
+      plot = plot,
+      width = as_bulk_fun(width),
+      height = as_bulk_fun(height),
+      dpi = as_bulk_fun(dpi)
+    )
+  }
+
+  bulk_plotly_item <- function(action, path, filename_base, plot, width, height) {
+    list(
+      type = "plotly",
+      action = action,
+      path = path,
+      filename_base = as_bulk_fun(filename_base),
+      plot = plot,
+      width = as_bulk_fun(width),
+      height = as_bulk_fun(height)
+    )
+  }
+
+  bulk_maaslin3_item <- function(action, path) {
+    list(
+      type = "maaslin3",
+      action = action,
+      path = path
+    )
+  }
+
+  sanitize_path_part <- function(value, fallback = "Untitled") {
+    value <- paste(as.character(value), collapse = "_")
+    value <- gsub("[<>:\"/\\\\|?*]+", "_", value)
+    value <- gsub("[[:cntrl:]]+", "", value)
+    value <- gsub("[[:space:]]+", " ", value)
+    value <- trimws(value)
+
+    if (!nzchar(value)) {
+      return(fallback)
+    }
+
+    value
+  }
+
+  sanitize_filename <- function(value) {
+    sanitize_path_part(value, fallback = "output")
+  }
+
+  safe_numeric_input <- function(value, fallback) {
+    value <- suppressWarnings(as.numeric(value))
+
+    if (length(value) == 0 || is.na(value[1]) || value[1] <= 0) {
+      return(fallback)
+    }
+
+    value[1]
+  }
+
+  clamp_numeric <- function(value, minimum, maximum) {
+    value <- safe_numeric_input(value, minimum)
+    max(minimum, min(maximum, value))
+  }
+
+  bulk_count_samples <- function() {
+    tryCatch({
+      max(1, ncol(dataInput_RA_level()[[4]]))
+    }, error = function(err) {
+      1
+    })
+  }
+
+  bulk_count_taxa <- function() {
+    tryCatch({
+      max(1, nrow(dataInput_RA_level()[[4]]))
+    }, error = function(err) {
+      1
+    })
+  }
+
+  bulk_count_conditions <- function() {
+    tryCatch({
+      metadata <- dataInput_RA_level()[[7]]
+
+      if (is.data.frame(metadata) && "Condition" %in% names(metadata)) {
+        return(max(1, length(unique(metadata$Condition))))
+      }
+
+      max(1, length(dataInput_RA_level()[[10]]))
+    }, error = function(err) {
+      1
+    })
+  }
+
+  bulk_result_rows <- function(action_id) {
+    tryCatch({
+      rows <- switch(
+        action_id,
+        action_wilcoxtest = nrow(data_wilcoxtest()[[2]]),
+        action_ttest = nrow(data_ttest()[[2]]),
+        action_metagenomeseq = nrow(data_metagenomeseq()[[2]]),
+        action_deseq2 = nrow(data_deseq2()[[2]]),
+        action_LEfSe = nrow(data_LEfSe()[[2]]),
+        action_limma = nrow(data_limma()[[2]]),
+        action_edger = nrow(data_edger()[[2]]),
+        action_kruskal_wallis_test = nrow(data_kruskal_wallis_test()[[2]]),
+        action_anova = nrow(data_anova()[[2]]),
+        1
+      )
+
+      max(1, rows)
+    }, error = function(err) {
+      1
+    })
+  }
+
+  auto_bulk_plot_dimensions <- function(item, plot_obj = NULL) {
+    sample_count <- bulk_count_samples()
+    taxa_count <- bulk_count_taxa()
+    condition_count <- bulk_count_conditions()
+    dims <- list(width = 8, height = 6, dpi = 300)
+
+    dims <- switch(
+      item$action,
+      action_m1_bar_plot_group = list(
+        width = clamp_numeric(4 + condition_count * 0.9, 8, 18),
+        height = clamp_numeric(5 + safe_numeric_input(input$top_n_bar_plot_group, 15) * 0.28, 7, 26),
+        dpi = 300
+      ),
+      action_m1_bar_plot_individual = list(
+        width = clamp_numeric(5 + sample_count * 0.35, 10, 40),
+        height = clamp_numeric(5 + safe_numeric_input(input$top_n_bar_plot_individual, 15) * 0.28, 7, 26),
+        dpi = 300
+      ),
+      action_alpha_diversity = list(
+        width = clamp_numeric(5 + condition_count * 1.1 + ifelse(identical(input$select_alpha, "8"), 4, 0), 8, 18),
+        height = if (identical(input$select_alpha, "8")) 10 else 7,
+        dpi = 300
+      ),
+      action_beta_diversity = list(
+        width = clamp_numeric(8 + condition_count * 1.1, 12, 22),
+        height = 7,
+        dpi = 300
+      ),
+      action_pca = list(
+        width = clamp_numeric(7 + sqrt(sample_count), 8, 18),
+        height = 7,
+        dpi = 300
+      ),
+      action_pca3d = list(
+        width = clamp_numeric(7 + sqrt(sample_count), 8, 18),
+        height = 7,
+        dpi = 300
+      ),
+      action_tsne = list(
+        width = clamp_numeric(7 + sqrt(sample_count), 8, 18),
+        height = 7,
+        dpi = 300
+      ),
+      action_umap = list(
+        width = clamp_numeric(7 + sqrt(sample_count), 8, 18),
+        height = 7,
+        dpi = 300
+      ),
+      action_taxa_condition_based_correlation = {
+        plot_dims <- tryCatch(taxa_condition_based_correlation_plot_dims(), error = function(err) list(width = 1100, height = 1000))
+        list(
+          width = clamp_numeric(plot_dims$width / 100, 9, 32),
+          height = clamp_numeric(plot_dims$height / 100, 8, 32),
+          dpi = 300
+        )
+      },
+      action_samples_based_correlation = list(
+        width = clamp_numeric(8 + sample_count * 0.15, 10, 32),
+        height = clamp_numeric(8 + sample_count * 0.15, 10, 32),
+        dpi = 300
+      ),
+      action_heatmap = list(
+        width = clamp_numeric(6 + sample_count * 0.28, 10, 35),
+        height = clamp_numeric(6 + taxa_count * 0.16, 8, 40),
+        dpi = 300
+      ),
+      action_wilcoxtest = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 28),
+        height = clamp_numeric(6 + bulk_result_rows(item$action) * 0.28, 8, 40),
+        dpi = 300
+      ),
+      action_ttest = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 28),
+        height = clamp_numeric(6 + bulk_result_rows(item$action) * 0.28, 8, 40),
+        dpi = 300
+      ),
+      action_metagenomeseq = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 28),
+        height = clamp_numeric(6 + bulk_result_rows(item$action) * 0.28, 8, 40),
+        dpi = 300
+      ),
+      action_deseq2 = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 28),
+        height = clamp_numeric(6 + bulk_result_rows(item$action) * 0.28, 8, 40),
+        dpi = 300
+      ),
+      action_LEfSe = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 28),
+        height = clamp_numeric(6 + bulk_result_rows(item$action) * 0.28, 8, 40),
+        dpi = 300
+      ),
+      action_limma = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 28),
+        height = clamp_numeric(6 + bulk_result_rows(item$action) * 0.28, 8, 40),
+        dpi = 300
+      ),
+      action_edger = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 28),
+        height = clamp_numeric(6 + bulk_result_rows(item$action) * 0.28, 8, 40),
+        dpi = 300
+      ),
+      action_kruskal_wallis_test = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 30),
+        height = clamp_numeric(7 + bulk_result_rows(item$action) * 0.3, 10, 45),
+        dpi = 300
+      ),
+      action_anova = list(
+        width = clamp_numeric(8 + sample_count * 0.18, 8, 30),
+        height = clamp_numeric(7 + bulk_result_rows(item$action) * 0.3, 10, 45),
+        dpi = 300
+      ),
+      dims
+    )
+
+    dims$width <- clamp_numeric(dims$width, 4, 50)
+    dims$height <- clamp_numeric(dims$height, 4, 50)
+    dims$dpi <- safe_numeric_input(dims$dpi, 300)
+    dims
+  }
+
+  bulk_pca3d_static_plot <- function() {
+    pca3d_data <- data_pca3d_table()[[2]]
+    required_columns <- c("Samples", "PC1", "PC2", "PC3", "Condition")
+    missing_columns <- setdiff(required_columns, names(pca3d_data))
+
+    if (length(missing_columns)) {
+      stop("PCA-3D result is missing columns: ", paste(missing_columns, collapse = ", "))
+    }
+
+    condition_values <- unique(pca3d_data$Condition)
+    condition_values <- condition_values[!is.na(condition_values)]
+    palette_name <- default_if_missing(input$select_pca3d_color_palette, "RdYlBu")
+
+    if (!palette_name %in% rownames(RColorBrewer::brewer.pal.info)) {
+      palette_name <- "RdYlBu"
+    }
+
+    max_colors <- RColorBrewer::brewer.pal.info[palette_name, "maxcolors"]
+    base_colors <- RColorBrewer::brewer.pal(
+      min(max_colors, max(3, min(max_colors, length(condition_values)))),
+      palette_name
+    )
+    colors <- colorRampPalette(base_colors)(max(1, length(condition_values)))
+
+    ggplot2::ggplot(
+      pca3d_data,
+      ggplot2::aes(x = PC1, y = PC2, color = Condition, size = PC3)
+    ) +
+      ggplot2::geom_point(alpha = 0.9) +
+      ggplot2::scale_color_manual(values = colors) +
+      ggplot2::scale_size_continuous(range = c(2.5, 8)) +
+      ggplot2::theme_bw() +
+      ggplot2::labs(
+        title = "PCA-3D",
+        subtitle = "Static export: PC1 vs PC2 with PC3 encoded by point size",
+        x = "PC1",
+        y = "PC2",
+        color = "Condition",
+        size = "PC3"
+      )
+  }
+
+  bulk_path <- function(root, path, filename) {
+    safe_parts <- vapply(path, sanitize_path_part, character(1))
+    dir_path <- do.call(file.path, c(list(root), as.list(safe_parts)))
+    dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+    file.path(dir_path, sanitize_filename(filename))
+  }
+
+  relative_path_parts <- function(relative_path) {
+    dir_part <- dirname(relative_path)
+
+    if (identical(dir_part, ".") || !nzchar(dir_part)) {
+      return(character(0))
+    }
+
+    unlist(strsplit(dir_part, "[/\\\\]"), use.names = FALSE)
+  }
+
+  write_bulk_table <- function(value, file, row_names) {
+    if (is.null(value)) {
+      stop("No table data is available.")
+    }
+
+    if (!is.data.frame(value)) {
+      value <- as.data.frame(value)
+    }
+
+    utils::write.csv(value, file, row.names = isTRUE(row_names))
+  }
+
+  write_bulk_zip <- function(zip_file, archive_root, temp_root) {
+    if (!requireNamespace("zip", quietly = TRUE)) {
+      stop("The zip package is required to create the bulk download.")
+    }
+
+    export_folder <- basename(archive_root)
+    zip_args <- list(
+      zipfile = zip_file,
+      files = export_folder,
+      recurse = TRUE,
+      root = temp_root
+    )
+
+    if ("include_directories" %in% names(formals(zip::zipr))) {
+      zip_args$include_directories <- TRUE
+    }
+
+    do.call(zip::zipr, zip_args)
+  }
+
+  save_bulk_item <- function(item, root, image_ext) {
+    if (identical(item$type, "table")) {
+      output_file <- bulk_path(root, item$path, item$filename())
+      write_bulk_table(item$data(), output_file, item$row_names)
+      return(character(0))
+    }
+
+    if (identical(item$type, "plot")) {
+      plot_obj <- item$plot()
+      plot_dims <- auto_bulk_plot_dimensions(item, plot_obj)
+      output_file <- bulk_path(root, item$path, paste0(item$filename_base(), image_ext))
+      ggsave(
+        output_file,
+        plot = plot_obj,
+        width = plot_dims$width,
+        height = plot_dims$height,
+        dpi = plot_dims$dpi,
+        units = "in"
+      )
+      return(character(0))
+    }
+
+    if (identical(item$type, "plotly")) {
+      plotly_format <- switch(
+        tolower(image_ext),
+        ".jpg" = "jpeg",
+        ".jpeg" = "jpeg",
+        ".png" = "png",
+        ".pdf" = "pdf",
+        ".svg" = "svg",
+        ".eps" = "eps",
+        NULL
+      )
+
+      if (is.null(plotly_format)) {
+        stop("Plotly image export does not support ", image_ext, " format.")
+      }
+
+      if (!requireNamespace("plotly", quietly = TRUE)) {
+        stop("The plotly package is not available for static image export.")
+      }
+
+      plot_dims <- auto_bulk_plot_dimensions(item)
+      output_file <- bulk_path(root, item$path, paste0(item$filename_base(), image_ext))
+      plotly::save_image(
+        item$plot(),
+        file = output_file,
+        format = plotly_format,
+        width = round(plot_dims$width * 100),
+        height = round(plot_dims$height * 100)
+      )
+      return(character(0))
+    }
+
+    if (identical(item$type, "maaslin3")) {
+      result <- data_MaAsLin3()
+      output_dir <- result$output_dir
+
+      if (is.null(output_dir) || is.na(output_dir) || !dir.exists(output_dir)) {
+        return("MaAsLin3 output directory was not available.")
+      }
+
+      warnings <- character(0)
+      output_zip <- result$output_zip
+
+      if (!is.null(output_zip) && length(output_zip) && !is.na(output_zip) && file.exists(output_zip)) {
+        output_file <- bulk_path(root, c(item$path, "MaAsLin3 ZIP"), "Maaslin3_output.zip")
+        file.copy(output_zip, output_file, overwrite = TRUE)
+      } else {
+        fallback_zip <- file.path(dirname(output_dir), paste0(basename(output_dir), ".zip"))
+
+        if (file.exists(fallback_zip)) {
+          output_file <- bulk_path(root, c(item$path, "MaAsLin3 ZIP"), "Maaslin3_output.zip")
+          file.copy(fallback_zip, output_file, overwrite = TRUE)
+        } else {
+          warnings <- c(warnings, "MaAsLin3 ZIP file was not available for inclusion in the bulk download.")
+        }
+      }
+
+      table_files <- list.files(
+        output_dir,
+        pattern = "\\.(csv|tsv)$",
+        recursive = TRUE,
+        full.names = FALSE,
+        ignore.case = TRUE
+      )
+
+      for (relative_file in table_files) {
+        source_file <- file.path(output_dir, relative_file)
+        table_data <- if (grepl("\\.tsv$", relative_file, ignore.case = TRUE)) {
+          utils::read.delim(source_file, check.names = FALSE)
+        } else {
+          utils::read.csv(source_file, check.names = FALSE)
+        }
+
+        output_name <- paste0(tools::file_path_sans_ext(basename(relative_file)), ".csv")
+        output_file <- bulk_path(
+          root,
+          c(item$path, "Tables", relative_path_parts(relative_file)),
+          output_name
+        )
+        utils::write.csv(table_data, output_file, row.names = FALSE)
+      }
+
+      if (!is.null(result$total_counts)) {
+        output_file <- bulk_path(root, c(item$path, "Tables"), "total_counts_in_each_samples.csv")
+        write_bulk_table(result$total_counts, output_file, row_names = FALSE)
+      }
+
+      figures_dir <- file.path(output_dir, "figures")
+
+      if (dir.exists(figures_dir)) {
+        image_pattern <- paste0("\\", image_ext, "$")
+        image_files <- list.files(
+          figures_dir,
+          pattern = image_pattern,
+          recursive = TRUE,
+          full.names = FALSE,
+          ignore.case = TRUE
+        )
+
+        for (relative_file in image_files) {
+          source_file <- file.path(figures_dir, relative_file)
+          output_file <- bulk_path(
+            root,
+            c(item$path, "Figures", relative_path_parts(relative_file)),
+            basename(relative_file)
+          )
+          file.copy(source_file, output_file, overwrite = TRUE)
+        }
+
+        available_images <- list.files(
+          figures_dir,
+          pattern = "\\.(png|pdf|jpg|jpeg|tiff|svg|bmp|eps|ps)$",
+          recursive = TRUE,
+          full.names = FALSE,
+          ignore.case = TRUE
+        )
+
+        if (!length(image_files) && length(available_images)) {
+          warnings <- c(
+            warnings,
+            paste0("MaAsLin3 figures were not available in ", image_ext, " format.")
+          )
+        }
+      }
+
+      return(warnings)
+    }
+
+    paste("Unsupported bulk item type:", item$type)
+  }
+
+  bulk_result_items <- function() {
+    alpha_methods <- c("Observed", "Chao1", "ACE", "Shannon", "Simpson", "InvSimpson", "Fisher", "All_Combined")
+    alpha_index <- suppressWarnings(as.integer(default_if_missing(input$select_alpha, 1)))
+
+    if (!length(alpha_index) || is.na(alpha_index) || alpha_index < 1 || alpha_index > length(alpha_methods)) {
+      alpha_index <- 1
+    }
+
+    alpha_method <- alpha_methods[alpha_index]
+
+    if (is.na(alpha_method)) {
+      alpha_method <- "Alpha"
+    }
+
+    list(
+      bulk_table_item("action_level", c("Upload files", "Taxonomy table"), "taxonomy_table.csv", function() dataInput_RA_level()[[4]], row_names = TRUE),
+      bulk_table_item("action_level", c("Upload files", "Metadata table"), "metadata_table.csv", function() dataInput_RA_level()[[7]], row_names = TRUE),
+      bulk_table_item("action_level", c("Upload files", "No. of conditions"), "conditions_table.csv", function() dataInput_RA_level()[[10]], row_names = TRUE),
+      bulk_table_item("action_level", c("Upload files", "Counts in samples"), "count_table.csv", function() dataInput_RA_level()[[11]], row_names = FALSE),
+
+      bulk_plot_item("action_m1_bar_plot_group", c("Distribution", "Group", "Plot"), function() paste0("Bar_Plot_Group_Top_", input$top_n_bar_plot_group, "_", dataInput_RA_level()[[6]]), function() data_bar_plot_group(), function() input$bar_plot_group_output_width, function() input$bar_plot_group_output_height, function() input$bar_plot_group_output_dpi),
+      bulk_plot_item("action_m1_bar_plot_individual", c("Distribution", "Individual", "Plot"), function() paste0("Bar_Plot_Individual_Top_", input$top_n_bar_plot_individual, "_", dataInput_RA_level()[[6]]), function() data_bar_plot_individual(), function() input$bar_plot_individual_output_width, function() input$bar_plot_individual_output_height, function() input$bar_plot_individual_output_dpi),
+
+      bulk_plot_item("action_alpha_diversity", c("Diversity", "Alpha", "Alpha diversity plot"), function() paste0("Alpha_Diversity_", alpha_method, "_index"), function() data_Alpha_Div_plot()[[1]], function() input$Boxplot_alpha_div_output_width, function() input$Boxplot_alpha_div_output_height, function() input$Boxplot_alpha_div_output_dpi),
+      bulk_table_item("action_alpha_diversity", c("Diversity", "Alpha", "Summary Table"), "Alpha_diversity_result.csv", function() data_Alpha_Div_plot()[[2]], row_names = TRUE),
+
+      bulk_plot_item("action_beta_diversity", c("Diversity", "Beta", "Beta diversity Plot"), function() paste0("Beta_Diversity_", input$select_beta, "_", input$select_method), function() data_Beta_Div_plot()[[1]], function() input$Boxplot_beta_div_output_width, function() input$Boxplot_beta_div_output_height, function() input$Boxplot_beta_div_output_dpi),
+      bulk_table_item("action_beta_diversity", c("Diversity", "Beta", "Summary Table"), "Beta_diversity_result.csv", function() data_Beta_Div_plot()[[2]], row_names = TRUE),
+      bulk_table_item("action_beta_diversity", c("Diversity", "Beta", "Adonis Table"), "Beta_diversity_adonis_result.csv", function() data_Beta_Div_plot()[[3]], row_names = TRUE),
+
+      bulk_plot_item("action_pca", c("Dimension reduction", "PCA-2D", "PCA 2D Plot"), "PCA_plot", function() data_pca_plot()[[1]], function() input$pca_plot_output_width, function() input$pca_plot_output_height, function() input$pca_plot_output_dpi),
+      bulk_table_item("action_pca", c("Dimension reduction", "PCA-2D", "Summary Table"), "pca_result.csv", function() data_pca_plot()[[2]], row_names = TRUE),
+      bulk_plot_item("action_pca3d", c("Dimension reduction", "PCA-3D", "PCA 3D Plot"), "PCA3D_plot", function() bulk_pca3d_static_plot(), 8, 7, 300),
+      bulk_table_item("action_pca3d", c("Dimension reduction", "PCA-3D", "Summary Table"), "pca3d_result.csv", function() data_pca3d_table()[[2]], row_names = TRUE),
+      bulk_plot_item("action_tsne", c("Dimension reduction", "t-SNE", "t-SNE Plot"), function() paste0("tsne_plot_", input$select_tsne_method), function() data_tsne_table()[[1]], function() input$tsne_plot_output_width, function() input$tsne_plot_output_height, function() input$tsne_plot_output_dpi),
+      bulk_table_item("action_tsne", c("Dimension reduction", "t-SNE", "Summary Table"), function() paste0("tsne_result_", input$select_tsne_method, ".csv"), function() data_tsne_table()[[2]], row_names = TRUE),
+      bulk_plot_item("action_umap", c("Dimension reduction", "UMAP", "UMAP Plot"), function() paste0("umap_plot_", input$select_umap_method), function() data_umap_table()[[1]], function() input$umap_plot_output_width, function() input$umap_plot_output_height, function() input$umap_plot_output_dpi),
+      bulk_table_item("action_umap", c("Dimension reduction", "UMAP", "Summary Table based on condition"), function() paste0("umap_result_based_on_condition_", input$select_umap_method, ".csv"), function() data_umap_table()[[2]], row_names = TRUE),
+      bulk_table_item("action_umap", c("Dimension reduction", "UMAP", "Summary Table based on cluster"), function() paste0("umap_result_based_on_cluster_", input$select_umap_method, ".csv"), function() data_umap_table()[[3]], row_names = TRUE),
+
+      bulk_plot_item("action_taxa_condition_based_correlation", c("Correlation", "Taxa-based", "Correlation plot"), function() paste0("taxa_condition_based_correlation_plot_", input$select_taxa_condition_based_correlation_method), function() data_taxa_condition_based_correlation_table()[[1]], function() input$taxa_condition_based_correlation_output_width, function() input$taxa_condition_based_correlation_output_height, function() input$taxa_condition_based_correlation_output_dpi),
+      bulk_table_item("action_taxa_condition_based_correlation", c("Correlation", "Taxa-based", "Summary Table"), function() paste0("taxa_condition_based_correlation_result_", input$select_taxa_condition_based_correlation_method, ".csv"), function() data_taxa_condition_based_correlation_table()[[2]], row_names = TRUE),
+      bulk_plot_item("action_samples_based_correlation", c("Correlation", "Sample-based", "Correlation plot"), function() paste0("samples_based_correlation_plot_", input$select_samples_based_correlation_method), function() data_samples_based_correlation_table()[[1]], function() input$samples_based_correlation_output_width, function() input$samples_based_correlation_output_height, function() input$samples_based_correlation_output_dpi),
+      bulk_table_item("action_samples_based_correlation", c("Correlation", "Sample-based", "Summary Table"), function() paste0("samples_based_correlation_result_", input$select_samples_based_correlation_method, ".csv"), function() data_samples_based_correlation_table()[[2]], row_names = TRUE),
+
+      bulk_plot_item("action_heatmap", c("Heatmap", "Heatmap", "Plot"), "Heatmap", function() data_heatmap()[[2]], function() input$heatmap_output_width, function() input$heatmap_output_height, function() input$heatmap_output_dpi),
+
+      bulk_table_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Summary Table"), "wilcoxtest_result_significant.csv", function() data_wilcoxtest()[[2]], row_names = FALSE),
+      bulk_table_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Summary Table"), "wilcoxtest_result_all.csv", function() data_wilcoxtest()[[3]], row_names = FALSE),
+      bulk_table_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Summary Table"), "wilcoxtest_relative_frequency.csv", function() data_wilcoxtest()[[4]], row_names = TRUE),
+      bulk_table_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Summary Table"), "total_counts_in_each_samples.csv", function() data_wilcoxtest()[[5]], row_names = FALSE),
+      bulk_plot_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Plot"), "wilcoxtest_plot", function() data_wilcoxtest()[[6]], function() input$Boxplot_wilcoxtest_output_width, function() input$Boxplot_wilcoxtest_output_height, function() input$Boxplot_wilcoxtest_output_dpi),
+
+      bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "ttest_result_significant.csv", function() data_ttest()[[2]], row_names = FALSE),
+      bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "ttest_result_all.csv", function() data_ttest()[[3]], row_names = FALSE),
+      bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "ttest_relative_frequency.csv", function() data_ttest()[[4]], row_names = TRUE),
+      bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "total_counts_in_each_samples.csv", function() data_ttest()[[5]], row_names = FALSE),
+      bulk_plot_item("action_ttest", c("Differential abundance", "t-test", "Plot"), "ttest_plot", function() data_ttest()[[6]], function() input$Boxplot_ttest_output_width, function() input$Boxplot_ttest_output_height, function() input$Boxplot_ttest_output_dpi),
+
+      bulk_table_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Summary Table"), "metagenomeseq_result_significant.csv", function() data_metagenomeseq()[[2]], row_names = FALSE),
+      bulk_table_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Summary Table"), "metagenomeseq_result_all.csv", function() data_metagenomeseq()[[3]], row_names = FALSE),
+      bulk_table_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Summary Table"), "total_counts_in_each_samples.csv", function() data_metagenomeseq()[[4]], row_names = FALSE),
+      bulk_plot_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Plot"), "metagenomeseq_plot", function() data_metagenomeseq()[[5]], function() input$Boxplot_metagenomeseq_output_width, function() input$Boxplot_metagenomeseq_output_height, function() input$Boxplot_metagenomeseq_output_dpi),
+
+      bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "deseq2_result_significant.csv", function() data_deseq2()[[2]], row_names = FALSE),
+      bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "deseq2_result_all.csv", function() data_deseq2()[[3]], row_names = FALSE),
+      bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "deseq2_normalized_count.csv", function() data_deseq2()[[4]], row_names = TRUE),
+      bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "total_counts_in_each_samples.csv", function() data_deseq2()[[5]], row_names = FALSE),
+      bulk_plot_item("action_deseq2", c("Differential abundance", "DESeq2", "Plot"), "deseq2_plot", function() data_deseq2()[[6]], function() input$Boxplot_deseq2_output_width, function() input$Boxplot_deseq2_output_height, function() input$Boxplot_deseq2_output_dpi),
+
+      bulk_table_item("action_LEfSe", c("Differential abundance", "LEfSe", "Summary Table"), "LEfSe_result_significant.csv", function() data_LEfSe()[[2]], row_names = FALSE),
+      bulk_table_item("action_LEfSe", c("Differential abundance", "LEfSe", "Summary Table"), "total_counts_in_each_samples.csv", function() data_LEfSe()[[3]], row_names = FALSE),
+      bulk_plot_item("action_LEfSe", c("Differential abundance", "LEfSe", "Plot"), "LEfSe_plot", function() data_LEfSe()[[4]], function() input$Boxplot_LEfSe_output_width, function() input$Boxplot_LEfSe_output_height, function() input$Boxplot_LEfSe_output_dpi),
+
+      bulk_maaslin3_item("action_MaAsLin3", c("Differential abundance", "MaAsLin3", "Results")),
+
+      bulk_table_item("action_limma", c("Differential abundance", "Limma-Voom", "Summary Table"), "limma_result_significant.csv", function() data_limma()[[2]], row_names = FALSE),
+      bulk_table_item("action_limma", c("Differential abundance", "Limma-Voom", "Summary Table"), "limma_result_all.csv", function() data_limma()[[3]], row_names = FALSE),
+      bulk_table_item("action_limma", c("Differential abundance", "Limma-Voom", "Summary Table"), "total_counts_in_each_samples.csv", function() data_limma()[[4]], row_names = FALSE),
+      bulk_plot_item("action_limma", c("Differential abundance", "Limma-Voom", "Plot"), "limma_plot", function() data_limma()[[5]], function() input$Boxplot_limma_output_width, function() input$Boxplot_limma_output_height, function() input$Boxplot_limma_output_dpi),
+
+      bulk_table_item("action_edger", c("Differential abundance", "edgeR", "Summary Table"), "edger_result_significant.csv", function() data_edger()[[2]], row_names = FALSE),
+      bulk_table_item("action_edger", c("Differential abundance", "edgeR", "Summary Table"), "edger_result_all.csv", function() data_edger()[[3]], row_names = FALSE),
+      bulk_table_item("action_edger", c("Differential abundance", "edgeR", "Summary Table"), "total_counts_in_each_samples.csv", function() data_edger()[[4]], row_names = FALSE),
+      bulk_plot_item("action_edger", c("Differential abundance", "edgeR", "Plot"), "edger_plot", function() data_edger()[[5]], function() input$Boxplot_edger_output_width, function() input$Boxplot_edger_output_height, function() input$Boxplot_edger_output_dpi),
+
+      bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "kruskal_wallis_test_result_significant.csv", function() data_kruskal_wallis_test()[[2]], row_names = FALSE),
+      bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "kruskal_wallis_test_result_all.csv", function() data_kruskal_wallis_test()[[3]], row_names = FALSE),
+      bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "kruskal_wallis_test_relative_frequency.csv", function() data_kruskal_wallis_test()[[4]], row_names = TRUE),
+      bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "total_counts_in_each_samples.csv", function() data_kruskal_wallis_test()[[5]], row_names = FALSE),
+      bulk_plot_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Plot"), "kruskal_wallis_test_plot", function() data_kruskal_wallis_test()[[6]], function() input$Boxplot_kruskal_wallis_test_output_width, function() input$Boxplot_kruskal_wallis_test_output_height, function() input$Boxplot_kruskal_wallis_test_output_dpi),
+
+      bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "anova_result_significant.csv", function() data_anova()[[2]], row_names = FALSE),
+      bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "anova_result_all.csv", function() data_anova()[[3]], row_names = FALSE),
+      bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "anova_relative_frequency.csv", function() data_anova()[[4]], row_names = TRUE),
+      bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "total_counts_in_each_samples.csv", function() data_anova()[[5]], row_names = FALSE),
+      bulk_plot_item("action_anova", c("Differential abundance", "ANOVA", "Plot"), "anova_plot", function() data_anova()[[6]], function() input$Boxplot_anova_output_width, function() input$Boxplot_anova_output_height, function() input$Boxplot_anova_output_dpi)
+    )
+  }
+
+  output$bulk_download_summary <- renderUI({
+    actions <- completed_actions()
+
+    if (!length(actions)) {
+      return(div(class = "run-log-empty", "No completed analysis outputs are available yet."))
+    }
+
+    completed_labels <- vapply(
+      sort(unique(actions)),
+      function(action_id) {
+        cfg <- tracked_actions[[action_id]]
+
+        if (is.null(cfg)) {
+          return(action_id)
+        }
+
+        format_scope(cfg$menu, cfg$tab)
+      },
+      character(1)
+    )
+
+    tagList(
+      p(paste(length(completed_labels), "completed analysis section(s) will be included.")),
+      tags$ul(lapply(completed_labels, tags$li))
+    )
+  })
+
+  output$download_bulk_results <- downloadHandler(
+    filename = function() {
+      paste0("MetaDAVis_bulk_results_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".zip")
+    },
+    content = function(file) {
+      image_ext <- default_if_missing(isolate(input$bulk_image_type), ".jpg")
+      actions <- isolate(completed_actions())
+      items <- bulk_result_items()
+      selected_items <- Filter(function(item) item$action %in% actions, items)
+      export_stamp <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+      tmp_root <- file.path(tempdir(), paste0("MetaDAVis_bulk_", session$token, "_", as.integer(Sys.time())))
+      archive_root <- file.path(tmp_root, paste0("MetaDAVis_bulk_results_", export_stamp))
+
+      if (dir.exists(tmp_root)) {
+        unlink(tmp_root, recursive = TRUE, force = TRUE)
+      }
+
+      dir.create(archive_root, recursive = TRUE, showWarnings = FALSE)
+      on.exit(unlink(tmp_root, recursive = TRUE, force = TRUE), add = TRUE)
+
+      progress <- shiny::Progress$new(session, min = 0, max = 1, style = "notification")
+      on.exit(progress$close(), add = TRUE)
+
+      total_steps <- length(selected_items) + 2L
+      current_step <- 0L
+      warnings <- character(0)
+
+      set_bulk_progress <- function(detail, value = NULL) {
+        if (is.null(value)) {
+          current_step <<- current_step + 1L
+          value <- min(0.95, current_step / max(total_steps, 1L))
+        }
+
+        progress$set(
+          message = "Preparing bulk download",
+          detail = detail,
+          value = value
+        )
+      }
+
+      set_bulk_progress("Adding sessionInfo.txt")
+      writeLines(sess_txt(), con = file.path(archive_root, "sessionInfo.txt"), useBytes = TRUE)
+
+      if (!length(selected_items)) {
+        set_bulk_progress("No completed analysis outputs to extract")
+      } else {
+        for (item in selected_items) {
+          output_label <- paste(c(item$path, item$type), collapse = " / ")
+          set_bulk_progress(paste("Extracting", output_label))
+
+          item_warnings <- tryCatch(
+            save_bulk_item(item, archive_root, image_ext),
+            error = function(err) {
+              paste(output_label, "could not be exported:", conditionMessage(err))
+            }
+          )
+
+          warnings <- c(warnings, item_warnings)
+        }
+      }
+
+      warnings <- warnings[nzchar(warnings)]
+
+      if (length(warnings)) {
+        writeLines(
+          warnings,
+          con = file.path(archive_root, "bulkDownload_warnings.txt"),
+          useBytes = TRUE
+        )
+      }
+
+      set_bulk_progress("Compressing ZIP file", value = 0.98)
+
+      if (file.exists(file)) {
+        unlink(file)
+      }
+
+      write_bulk_zip(file, archive_root, tmp_root)
+      progress$set(message = "Preparing bulk download", detail = "Download ready", value = 1)
+
+      showNotification("Bulk download ZIP is ready.", type = "message", duration = 5)
+    },
+    contentType = "application/zip"
+  )
   
   
   

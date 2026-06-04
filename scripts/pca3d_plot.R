@@ -32,22 +32,43 @@ pca3d_plot <- function(
     }
   }
   
-  # 1) Transpose and convert input data
-  OTU_input <- as.data.frame(t(OTU_input))
-  log_head(OTU_input, "OTU_input (transposed)")
-  
-  # 2) PCA with 3 components
-  prin_comp <- prcomp(OTU_input, rank. = 3)
+  # 1) Keep only samples present in both the count matrix and metadata.
+  shared_samples <- intersect(rownames(group_index), colnames(OTU_input))
+  if (length(shared_samples) == 0) {
+    stop("No overlapping samples between OTU_input (columns) and group_index (rownames).")
+  }
+
+  OTU_input <- OTU_input[, shared_samples, drop = FALSE]
+  group_index <- group_index[shared_samples, , drop = FALSE]
+  OTU_input <- OTU_input[rowSums(OTU_input) > 0, , drop = FALSE]
+  log_head_vec(shared_samples, "shared_samples")
+  log_head(OTU_input, "OTU_input (synced and filtered)")
+
+  # 2) PCA with up to 3 components; pad missing PCs so small datasets still render.
+  pca_input <- as.data.frame(t(OTU_input))
+  rank_components <- min(3, nrow(pca_input), ncol(pca_input))
+  if (rank_components < 1) {
+    stop("PCA-3D needs at least one non-empty sample and one non-empty taxon.")
+  }
+
+  prin_comp <- prcomp(pca_input, rank. = rank_components)
   components <- data.frame(prin_comp$x)
+  for (pc_name in c("PC1", "PC2", "PC3")) {
+    if (!pc_name %in% names(components)) {
+      components[[pc_name]] <- 0
+    }
+  }
+  components <- components[, c("PC1", "PC2", "PC3"), drop = FALSE]
   log_head(components, "PCA scores (PC1-3)")
   
   # 3) Invert PC2 and PC3 for better visualization
   components$PC2 <- -components$PC2
   components$PC3 <- -components$PC3
   
-  # 4) Merge with metadata
-  components <- merge(components, group_index, by = "row.names", all = TRUE)
-  colnames(components)[1] <- "Samples"
+  # 4) Add metadata without creating unmatched rows.
+  components$Samples <- rownames(components)
+  components <- cbind(components, group_index[rownames(components), , drop = FALSE])
+  components <- components[, c("Samples", setdiff(names(components), "Samples")), drop = FALSE]
   log_head(components, "components (with metadata)")
   
   # 5) Round numeric columns
@@ -71,9 +92,11 @@ pca3d_plot <- function(
     z = ~PC3,
     text = ~Samples,
     color = ~Condition,
-    colors = colors
+    colors = colors,
+    type = "scatter3d",
+    mode = "markers",
+    marker = list(size = 6, opacity = 0.9)
   ) %>%
-    add_markers(size = 12) %>%
     layout(
       legend = list(title = list(text = "Condition")),
       scene = list(

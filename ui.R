@@ -1280,6 +1280,37 @@ navbarMenu("Differential abundance",
              ),
            ),
 ),
+navbarMenu(
+  "Bulk Download",
+  tabPanel(
+    "All completed outputs",
+    sidebarLayout(
+      sidebarPanel(
+        h3("Bulk Download"),
+        selectInput(
+          "bulk_image_type",
+          label = "Image format",
+          choices = list(
+            "JPG" = ".jpg",
+            "PNG" = ".png",
+            "TIFF" = ".tiff",
+            "PDF" = ".pdf",
+            "SVG" = ".svg",
+            "BMP" = ".bmp",
+            "EPS" = ".eps",
+            "PS" = ".ps"
+          ),
+          selected = ".jpg"
+        ),
+        downloadButton(outputId = "download_bulk_results", label = "Download ZIP")
+      ),
+      mainPanel(
+        h3("Completed Outputs"),
+        uiOutput("bulk_download_summary")
+      )
+    )
+  )
+),
 tabPanel(
   "Run Log",
   h3("Run Status"),
