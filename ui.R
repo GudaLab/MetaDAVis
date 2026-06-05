@@ -211,8 +211,12 @@ shinyUI(
             <li>Two groups: Six different analyses were provided using the Wilcoxon Rank Sum test, t-test, metagenomeSeq, DESeq2, Limma-Voom, edgeR, LEfSe, MaAsLin3. These will perform statistical analysis and generate plots and summary tables based on the significant taxa.</li>
             <li>Multiple groups comparison: Two different analyses, such as Kruskal-Wallis test and ANOVA was used for more than multiple group comparisons. These will perform statistical analysis and generate plots and summary tables based on the significant taxa.</li>
             </ul>
+          <li>Bulk download</li>
+            <ul>
+            <li>The Bulk Download menu exports all completed analysis images and tables in one structured ZIP folder. Outputs are organized by tab and sub-tab, tables are saved as CSV files, image format can be selected, MaAsLin3 output ZIP is included when available, and sessionInfo.txt is added for reproducibility.</li>
+            </ul>
           </ul>
-        <p>*It provides publication quality plots in seven formats: JPG, TIFF, PDF, SVG, BMP, EPS, and PS and summary tables (.csv format) to visualize and download.</p>
+        <p>*It provides publication quality plots in multiple formats and summary tables (.csv format) to visualize, download individually, or export together through Bulk Download.</p>
         <hr>
         <h3> use MetaDAVis online</h3>
         <p>MetaDAVis is deployed at: <a href='https://www.gudalab-rtools.net/MetaDAVis'>https://www.gudalab-rtools.net/MetaDAVis</a></p>
