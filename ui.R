@@ -179,7 +179,7 @@ shinyUI(
         hr(),
         h3("Introduction"),
         hr(),
-        p(strong("MetaDAVis"), " (interactive Metagenome Data Analysis and Visualization) is a browser-based and user-friendly R Shiny application for researchers without programming proficiency to analyze and visualize metagenomics results from kingdom to species level. It comprises six functional analyses."),
+        p(strong("MetaDAVis"), " (interactive Metagenome Data Analysis and Visualization) is a browser-based and user-friendly R Shiny application for researchers without programming proficiency to analyze and visualize metagenomics results from kingdom to species level. It comprises six functional analyses and one bulk download utility."),
         
         HTML("<B>The package includes the following:</B><br>
         <ul>
@@ -213,7 +213,7 @@ shinyUI(
             </ul>
           <li>Bulk download</li>
             <ul>
-            <li>The Bulk Download menu exports all completed analysis images and tables in one structured ZIP folder. Outputs are organized by tab and sub-tab, tables are saved as CSV files, image format can be selected, MaAsLin3 output ZIP is included when available, and sessionInfo.txt is added for reproducibility.</li>
+            <li>The Bulk Download menu exports all completed analysis images and tables in one structured ZIP folder. The Completed Outputs panel lists the analyses that will be included, users can choose JPG, PNG, TIFF, PDF, SVG, BMP, EPS, or PS for plots, tables are saved as CSV files, MaAsLin3 output ZIP is included when available, sessionInfo.txt is added for reproducibility, and bulkDownload_warnings.txt is added if any completed output cannot be exported.</li>
             </ul>
           </ul>
         <p>*It provides publication quality plots in multiple formats and summary tables (.csv format) to visualize, download individually, or export together through Bulk Download.</p>

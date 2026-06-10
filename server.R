@@ -1147,6 +1147,73 @@ server <- function(input, output, session) {
       ggsave(file,plot = data_taxa_condition_based_correlation_table()[[1]], width = input$taxa_condition_based_correlation_output_width, height = input$taxa_condition_based_correlation_output_height, dpi = input$taxa_condition_based_correlation_output_dpi, units = "in")
     }
   )  
+
+  metadata_condition_choices <- function() {
+    placeholder <- "Please upload metadata in upload page"
+    conditions <- tryCatch(dataInput_RA_level()[[10]], error = function(err) NULL)
+
+    if (is.null(conditions)) {
+      return(placeholder)
+    }
+
+    if (is.data.frame(conditions)) {
+      if ("Condition" %in% colnames(conditions)) {
+        conditions <- conditions$Condition
+      } else {
+        conditions <- conditions[[1]]
+      }
+    }
+
+    conditions <- unique(as.character(conditions))
+    conditions <- conditions[!is.na(conditions) & nzchar(conditions)]
+
+    if (!length(conditions)) {
+      return(placeholder)
+    }
+
+    conditions
+  }
+
+  has_metadata_conditions <- function(conditions) {
+    length(conditions) > 0 && !identical(conditions, "Please upload metadata in upload page")
+  }
+
+  update_differential_condition_pair <- function(group1_id, group2_id) {
+    conditions <- metadata_condition_choices()
+
+    if (!has_metadata_conditions(conditions)) {
+      updateSelectInput(session, group1_id, choices = conditions, selected = conditions[1])
+      updateSelectInput(session, group2_id, choices = conditions, selected = conditions[1])
+      return(invisible(NULL))
+    }
+
+    selected_group1 <- input[[group1_id]]
+    if (is.null(selected_group1) || !length(selected_group1) || !(selected_group1 %in% conditions)) {
+      selected_group1 <- conditions[1]
+    }
+
+    group2_choices <- conditions[conditions != selected_group1]
+    selected_group2 <- input[[group2_id]]
+
+    if (!length(group2_choices)) {
+      selected_group2 <- character(0)
+    } else if (is.null(selected_group2) || !length(selected_group2) || !(selected_group2 %in% group2_choices)) {
+      selected_group2 <- group2_choices[1]
+    }
+
+    updateSelectInput(session, group1_id, choices = conditions, selected = selected_group1)
+    updateSelectInput(session, group2_id, choices = group2_choices, selected = selected_group2)
+  }
+
+  observe_differential_condition_pair <- function(group1_id, group2_id) {
+    observeEvent(input$action_level, {
+      update_differential_condition_pair(group1_id, group2_id)
+    })
+
+    observeEvent(input[[group1_id]], {
+      update_differential_condition_pair(group1_id, group2_id)
+    }, ignoreInit = TRUE)
+  }
   
   ###########################
   ##      wilcox-test      ##
@@ -1157,28 +1224,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_wilcoxtest", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_wilcoxtest", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_wilcoxtest", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_wilcoxtest", "group2_wilcoxtest")
   
   data_wilcoxtest <- eventReactive(input$action_wilcoxtest,{
     run_with_tracking("action_wilcoxtest", function() {
@@ -1249,28 +1295,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_ttest", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_ttest", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_ttest", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_ttest", "group2_ttest")
   
   data_ttest <- eventReactive(input$action_ttest,{
     run_with_tracking("action_ttest", function() {
@@ -1340,28 +1365,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_RA_metagenomeseq", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_metagenomeseq", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_metagenomeseq", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_metagenomeseq", "group2_metagenomeseq")
   
   
   data_metagenomeseq <- eventReactive(input$action_metagenomeseq,{
@@ -1425,28 +1429,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_RA_deseq2", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_deseq2", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_deseq2", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_deseq2", "group2_deseq2")
   
   
   
@@ -1517,28 +1500,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_RA_LEfSe", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_LEfSe", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_LEfSe", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_LEfSe", "group2_LEfSe")
   
   
   
@@ -1595,28 +1557,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_RA_MaAsLin3", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_MaAsLin3", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_MaAsLin3", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_MaAsLin3", "group2_MaAsLin3")
   
   data_MaAsLin3 <- eventReactive(input$action_MaAsLin3,{
     run_with_tracking("action_MaAsLin3", function() {
@@ -1671,28 +1612,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_RA_limma", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_limma", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_limma", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_limma", "group2_limma")
   
   
   
@@ -1759,28 +1679,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "input_RA_edger", choices = labels_data_type)
   })
   
-  #Update conditions
-  observeEvent(input$action_level,{
-    label_condition1 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type1 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition1<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group1_edger", choices = label_condition1)
-  })
-  
-  observeEvent(input$action_level,{
-    label_condition2 <- "Please upload metadata in upload page"
-    if(is.null(dataInput_RA_level()[[10]])){
-      label_type2 <- "Please upload metadata in upload page"
-    }
-    else{
-      label_condition2<- dataInput_RA_level()[[10]]
-    }
-    updateSelectInput(session, "group2_edger", choices = label_condition2)
-  })
+  observe_differential_condition_pair("group1_edger", "group2_edger")
   
   
   data_edger <- eventReactive(input$action_edger,{
