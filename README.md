@@ -1,59 +1,208 @@
 # MetaDAVis
+
 ## Introduction
-interactive Metagenome Data Analysis and Visualization (MetaDAVis) application analyzes 16S and whole metagenome sequence results at various levels (kingdom to species). It is a browser-based and user-friendly R Shiny application for researchers to analyze and visualize without programming proficiency. It comprises six functional analyses.
-1.	Data Summary and Distribution
-2.	Diversity analysis
-3.	Dimension reduction
-4.	Correlation analysis
-5.	Heatmap
-6.	Differential abundance (Two and multiple groups)
 
-## use MetaDAVis online
-iMGDAViz is deployed at: https://www.gudalab-rtools.net/MetaDAVis
+MetaDAVis, interactive Metagenome Data Analysis and Visualization, is a browser-based R Shiny application for analyzing and visualizing 16S and whole-metagenome sequencing results from kingdom to species level. It is designed for researchers who want to run common metagenomics analyses without writing R code.
 
-## Installation
-In this tutorial, we will go through the installation and usage of each functional module using the example dataset. The MetaDAVis is publicly available at (https://github.com/GudaLab/MetaDAVis). The example dataset is provided on the GitHub page (https://github.com/GudaLab/MetaDAVis/tree/main/www/example_data).
+MetaDAVis includes:
 
-How to start MetaDAVis locally
+1. Data summary and abundance distribution
+2. Diversity analysis
+3. Dimension reduction
+4. Correlation analysis
+5. Heatmap
+6. Differential abundance for two-group and multi-group comparisons
+7. Bulk download for all completed outputs
 
-Download the MetaDAVis application locally from the GitHub page (https://github.com/GudaLab/MetaDAVis).
+## Use MetaDAVis Online
 
-### Requirement
+MetaDAVis is deployed at:
 
-•	R (≥ 4.4.2), available at (https://www.r-project.org/)
+https://www.gudalab-rtools.net/MetaDAVis
 
-•	RStudio (≥ 2024.12.0) available at (https://posit.co/download/rstudio-desktop/) 
+## Local Requirements
 
-•	Bioconductor (≥ 3.20) and 
+Recommended versions:
 
-•	Shiny (≥ 1.10.0)
+- R >= 4.4.2
+- RStudio >= 2024.12.0
+- Bioconductor >= 3.20
+- Shiny >= 1.10.0
 
-Start an R session using RStudio and run the following commands to install the shiny package:
-if Bioconductor version is less than 3.19. Bioconductor could be updated by :
+Recommended local build tools:
+
+- Windows: install Rtools for your R version from https://cran.r-project.org/bin/windows/Rtools/
+- macOS: install Xcode Command Line Tools with `xcode-select --install`
+- Ubuntu/Debian Linux: install development libraries before installing R packages:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential gfortran libcurl4-openssl-dev libssl-dev libxml2-dev libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libharfbuzz-dev libfribidi-dev
 ```
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+
+- Red Hat/CentOS/Fedora Linux: install development libraries before installing R packages:
+
+```bash
+sudo yum install -y gcc gcc-c++ gcc-gfortran make libcurl-devel openssl-devel libxml2-devel fontconfig-devel freetype-devel libpng-devel libtiff-devel libjpeg-turbo-devel harfbuzz-devel fribidi-devel
 ```
-```
-install.packages("shiny")
-```
-To run MetaDAVis by the following commands in R:
-```
+
+## Install MetaDAVis Locally
+
+### Option 1: Run Directly From GitHub
+
+Open R or RStudio and run:
+
+```r
+install.packages("shiny", repos = "https://cloud.r-project.org")
 library(shiny)
-shiny::runGitHub("MetaDAVis","GudaLab")
+shiny::runGitHub("MetaDAVis", "GudaLab")
 ```
-Or 
-Alternatively, download the source code from GitHub and run the following command in the R session using RStudio:
+
+### Option 2: Download and Run From a Local Folder
+
+Download or clone the MetaDAVis repository:
+
+```bash
+git clone https://github.com/GudaLab/MetaDAVis.git
+cd MetaDAVis
 ```
+
+Then open R or RStudio in the MetaDAVis folder and run:
+
+```r
 library(shiny)
-runApp('/path/to/the/MetaDAVis-master', launch.browser=TRUE)
+runApp(".", launch.browser = TRUE)
 ```
+
+If you downloaded a ZIP file instead of using Git, unzip it, open R/RStudio in that folder, and run the same `runApp()` command.
+
+## Install All Required R Packages
+
+MetaDAVis checks for missing packages at startup, but installing all dependencies first is recommended for a smoother local launch.
+
+Run this once in R or RStudio:
+
+```r
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+cran_packages <- c(
+  "shiny",
+  "DT",
+  "shinythemes",
+  "shinyFiles",
+  "shinyjs",
+  "shinydashboard",
+  "ggplot2",
+  "ggpubr",
+  "vegan",
+  "ggfortify",
+  "ggplotify",
+  "reshape2",
+  "tibble",
+  "scales",
+  "dunn.test",
+  "tidyr",
+  "dplyr",
+  "devtools",
+  "patchwork",
+  "GGally",
+  "plotly",
+  "zip",
+  "filelock",
+  "shinycssloaders",
+  "RColorBrewer",
+  "circlize"
+)
+
+missing_cran <- cran_packages[!vapply(cran_packages, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing_cran)) {
+  install.packages(missing_cran, dependencies = TRUE)
+}
+
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+
+bioc_packages <- c(
+  "phyloseq",
+  "microbiome",
+  "ComplexHeatmap",
+  "qvalue",
+  "scater",
+  "DESeq2",
+  "limma",
+  "edgeR",
+  "metagenomeSeq",
+  "bluster",
+  "mia",
+  "lefser"
+)
+
+missing_bioc <- bioc_packages[!vapply(bioc_packages, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing_bioc)) {
+  BiocManager::install(missing_bioc, update = FALSE, ask = FALSE)
+}
+
+github_packages <- c(
+  "microsud/microbiomeutilities",
+  "biobakery/maaslin3"
+)
+
+for (pkg in github_packages) {
+  package_name <- sub(".*/", "", pkg)
+  if (!requireNamespace(package_name, quietly = TRUE)) {
+    BiocManager::install(pkg, update = FALSE, ask = FALSE)
+  }
+}
+```
+
+If a GitHub package fails to install through `BiocManager::install()`, install it with `devtools`:
+
+```r
+devtools::install_github("microsud/microbiomeutilities")
+devtools::install_github("biobakery/maaslin3")
+```
+
+## Tool and Package Summary
+
+| MetaDAVis tool | Main R packages used |
+| --- | --- |
+| Upload and preprocessing | `tidyr`, `dplyr`, `tibble` |
+| Group and individual abundance distribution | `ggplot2`, `RColorBrewer` |
+| Alpha diversity | `phyloseq`, `ggplot2`, `ggpubr`, `RColorBrewer` |
+| Beta diversity | `phyloseq`, `vegan`, `reshape2`, `ggplot2`, `ggpubr` |
+| PCA-2D | `ggfortify`, `ggplot2`, `RColorBrewer`, `dplyr` |
+| PCA-3D | `plotly`, `RColorBrewer` |
+| t-SNE and UMAP | `phyloseq`, `bluster`, `patchwork`, `scater`, `mia`, `RColorBrewer`, `dplyr` |
+| Taxa and sample correlation | `ggpubr`, `GGally`, `ggplot2`, `RColorBrewer`, `dplyr` |
+| Heatmap | `ComplexHeatmap`, `circlize`, `scales`, `ggplotify`, `RColorBrewer` |
+| Wilcoxon and t-test | `ggplot2`, `tibble`, `qvalue`, `ComplexHeatmap`, `ggplotify`, `RColorBrewer`, `dplyr` |
+| metagenomeSeq | `metagenomeSeq`, `ggplot2`, `tibble`, `ComplexHeatmap`, `ggplotify`, `dplyr` |
+| DESeq2 | `DESeq2`, `ggplot2`, `tibble`, `qvalue`, `ComplexHeatmap`, `ggplotify`, `dplyr` |
+| LEfSe | `phyloseq`, `lefser`, `mia`, `tibble`, `ggplot2`, `RColorBrewer`, `dplyr` |
+| MaAsLin3 | `maaslin3`, `tibble`, `dplyr` |
+| Limma-Voom and edgeR | `limma`, `edgeR`, `ggplot2`, `tibble`, `ComplexHeatmap`, `ggplotify`, `circlize`, `dplyr` |
+| Kruskal-Wallis and ANOVA | `ggplot2`, `tibble`, `qvalue`, `dunn.test`, `ComplexHeatmap`, `ggplotify`, `RColorBrewer` |
+| Bulk download | `zip`, `filelock`, base R |
+| User interface | `shiny`, `DT`, `shinythemes`, `shinyFiles`, `shinyjs`, `shinydashboard`, `shinycssloaders` |
+
 ## Usage
-Tutorial for MetaDAVis https://github.com/GudaLab/MetaDAVis/blob/main/www/manual/MetaDAVis_manual.pdf
 
-## Tested
-This Application was tested in Linux (Red Hat and Ubuntu) and Windows (10 and 11)
+Open the Manual tab inside the MetaDAVis application for the step-by-step tutorial, example-data instructions, analysis options, and Bulk Download instructions.
+
+Example data are included in:
+
+```text
+www/example_data
+```
+
+## Tested Platforms
+
+MetaDAVis has been tested on:
+
+- Linux: Red Hat and Ubuntu
+- Windows: 10 and 11
 
 ## Citation
-Jagadesan S, Guda C (2025) MetaDAVis: An R shiny application for metagenomic data analysis and visualization. PLoS ONE 20(4): e0319949. (https://doi.org/10.1371/journal.pone.0319949)
 
+Jagadesan S, Guda C (2025) MetaDAVis: An R shiny application for metagenomic data analysis and visualization. PLoS ONE 20(4): e0319949. https://doi.org/10.1371/journal.pone.0319949
