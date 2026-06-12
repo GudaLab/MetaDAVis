@@ -188,7 +188,7 @@ devtools::install_github("biobakery/maaslin3")
 
 ## Usage
 
-Open the Manual tab inside the MetaDAVis application for the step-by-step tutorial, example-data instructions, analysis options, and Bulk Download instructions.
+Open the Manual tab inside the MetaDAVis application for the step-by-step tutorial https://github.com/GudaLab/MetaDAVis/blob/main/www/manual/MetaDAVis_manual.pdf, example-data instructions, analysis options, and Bulk Download instructions.
 
 Example data are included in:
 
