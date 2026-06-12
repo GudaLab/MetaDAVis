@@ -34,6 +34,18 @@ pca_plot <- function(
       flush.console()
     }
   }
+
+  as_shiny_logical <- function(value) {
+    if (is.logical(value)) {
+      return(isTRUE(value))
+    }
+
+    if (is.character(value) && length(value) > 0) {
+      return(toupper(value[1]) == "TRUE")
+    }
+
+    isTRUE(value)
+  }
   
   # 0) sync samples by intersection of sample IDs (rownames in group_index vs colnames in OTU_input)
   if (is.null(rownames(group_index))) {
@@ -78,6 +90,8 @@ pca_plot <- function(
     cat("\n--- colors (first few) ---\n"); print(utils::head(colors, head_n))
   }
   log_head_vec(unique_conditions, "Condition levels")
+  show_labels <- as_shiny_logical(pca_label1)
+  show_frame <- as_shiny_logical(pca_frame)
   
   # 5) Plot
   plots1 <- autoplot(
@@ -85,9 +99,9 @@ pca_plot <- function(
     data  = group_index,
     colour = "Condition",
     size   = 3,
-    label  = isTRUE(pca_label1),
+    label  = show_labels,
     label.size = pca_label_size,
-    frame  = pca_frame,
+    frame  = show_frame,
     frame.type = "norm"
   ) +
     coord_equal(ratio = 1) +

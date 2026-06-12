@@ -816,7 +816,7 @@ server <- function(input, output, session) {
   })
   
   output$plot_pca <- renderPlot({
-    data_pca_plot()[1]
+    data_pca_plot()[[1]]
   })
   
   output$download_plot_pca <- downloadHandler(
