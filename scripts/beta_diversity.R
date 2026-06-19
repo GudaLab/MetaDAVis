@@ -14,6 +14,8 @@ beta_diversity_boxplot <- function(
     plot_method,
     adonis_permutations,
     adonis_dissimilarities,   # renamed for clarity (was adonis_dissimilarities)
+    pvalue = "No",
+    boxplot_pvalue = "No",
     show_head = TRUE,
     head_n = 5,
     show_colors = TRUE
@@ -91,6 +93,54 @@ beta_diversity_boxplot <- function(
                            sqrt.dist = adonis_dissimilarities)
   table_adonis <- as.data.frame(adonis_result)
   log_head(table_adonis, "adonis2 result")
+
+  adonis_condition_row <- if ("Condition" %in% rownames(table_adonis)) {
+    "Condition"
+  } else {
+    rownames(table_adonis)[1]
+  }
+  adonis_pvalue_column <- grep("^Pr\\(>F\\)$", colnames(table_adonis), value = TRUE)
+  adonis_r2_column <- grep("^R2$", colnames(table_adonis), value = TRUE)
+
+  beta_pvalue_stars <- function(p_value) {
+    if (is.na(p_value)) {
+      return("NA")
+    } else if (p_value <= 0.0001) {
+      return("****")
+    } else if (p_value <= 0.001) {
+      return("***")
+    } else if (p_value <= 0.01) {
+      return("**")
+    } else if (p_value <= 0.05) {
+      return("*")
+    }
+
+    "ns"
+  }
+
+  permanova_label <- NULL
+  if (pvalue %in% c("Yes", "TRUE", "true", "star") && length(adonis_pvalue_column)) {
+    permanova_pvalue <- suppressWarnings(as.numeric(table_adonis[adonis_condition_row, adonis_pvalue_column[1]]))
+    permanova_r2 <- if (length(adonis_r2_column)) {
+      suppressWarnings(as.numeric(table_adonis[adonis_condition_row, adonis_r2_column[1]]))
+    } else {
+      NA_real_
+    }
+
+    pvalue_label <- if (identical(pvalue, "star")) {
+      beta_pvalue_stars(permanova_pvalue)
+    } else {
+      paste0("p = ", format.pval(permanova_pvalue, digits = 3, eps = 0.001))
+    }
+
+    r2_label <- if (!is.na(permanova_r2)) {
+      paste0("R2 = ", signif(permanova_r2, 3), ", ")
+    } else {
+      ""
+    }
+
+    permanova_label <- paste0("PERMANOVA (Condition): ", r2_label, pvalue_label)
+  }
   
   ## Ordination
   ordination_df <- NULL
@@ -176,12 +226,33 @@ beta_diversity_boxplot <- function(
           axis.text.y  = element_text(size = 12)) +
     theme_bw() +
     scale_color_manual(values = colors)
+
+  if (boxplot_pvalue %in% c("Yes", "TRUE", "true", "star")) {
+    boxplot_conditions <- levels(droplevels(df.bray$Conditions))
+
+    if (length(boxplot_conditions) >= 2) {
+      boxplot_comparisons <- combn(boxplot_conditions, 2, simplify = FALSE)
+      plot1 <- plot1 +
+        ggpubr::stat_compare_means(
+          comparisons = boxplot_comparisons,
+          label = if (identical(boxplot_pvalue, "star")) "p.signif" else "p.format",
+          tip.length = 0.01,
+          method = "wilcox.test",
+          symnum.args = if (identical(boxplot_pvalue, "star")) {
+            list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, Inf), symbols = c("****", "***", "**", "*", "ns"))
+          } else {
+            NULL
+          }
+        )
+    }
+  }
   
   ## Ordination scatter
   plot2 <- ggplot(ordination_df, aes(x = Axis1, y = Axis2, color = Condition)) +
     geom_point(size = 3) +
     theme_minimal() +
-    ggtitle(ordination_title) + theme_bw() +
+    labs(title = ordination_title, subtitle = permanova_label) +
+    theme_bw() +
     stat_ellipse(aes(group = Condition)) +
     scale_color_manual(values = colors)
   

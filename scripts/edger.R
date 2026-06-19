@@ -2,6 +2,7 @@ library(ggplot2)
 library(tibble)
 library(edgeR)
 library(dplyr)
+source("scripts/differential_plot_helpers.R")
 
 edger_summary <- function(
     OTU_input,
@@ -12,6 +13,9 @@ edger_summary <- function(
     plot_method,
     alpha,
     edger_color_palette,
+    show_plot_labels = TRUE,
+    plot_top_n = 25,
+    plot_taxa_mode = "all",
     show_head = TRUE,
     head_n = 5,
     show_colors = TRUE
@@ -123,13 +127,14 @@ edger_summary <- function(
   
   # Mark significance
   res_tax$Significant <- ifelse(rownames(res_tax) %in% rownames(res_tax_sig), "Yes", "No")
+  plot_taxa <- differential_plot_taxa(res_tax_sig, plot_top_n, plot_taxa_mode)
   
   # Build plotting data (if significant)
   df <- NULL
   df1 <- NULL
   if (nrow(res_tax_sig) >= 1) {
     # Heatmap matrix (z-scored counts of significant taxa)
-    OTU_input1 <- OTU_input[rownames(OTU_input) %in% rownames(res_tax_sig), , drop = FALSE]
+    OTU_input1 <- OTU_input[rownames(OTU_input) %in% plot_taxa, , drop = FALSE]
     df1 <- scale(OTU_input1)
     
     # Log-relative normalization for box/violin plots
@@ -138,7 +143,7 @@ edger_summary <- function(
     data_lr <- as.data.frame(data_lr)
     
     groups <- setupinfo$Condition
-    for (i in res_tax[rownames(res_tax_sig), "OTU"]) {
+    for (i in res_tax[plot_taxa, "OTU"]) {
       label_col <- if (identical(index_pvalue, "padj")) "FDR" else "PValue"
       tmp <- data.frame(
         Value     = data_lr[, i],
@@ -163,6 +168,7 @@ edger_summary <- function(
   
   # Plots
   p1 <- NULL
+  individual_plots <- list()
   if (exists("res_tax_sig") && nrow(res_tax_sig) >= 1) {
     if (plot_method == "1") {
       p1 <- ggplot(df, aes(x = Taxa1, y = Value, color = Condition)) +
@@ -174,12 +180,8 @@ edger_summary <- function(
               axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
         scale_color_manual(values = cond_colors)
     } else if (plot_method == "2") {
-      p1 <- ggplot(df, aes(Condition, Value, colour = Condition)) +
-        ylab("Log-relative normalized") +
-        geom_boxplot() + geom_jitter(width = 0.2, alpha = 0.7) + theme_bw() +
-        facet_wrap(~ Taxa, scales = "free", ncol = 3) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-        scale_color_manual(values = cond_colors)
+      individual_plots <- differential_individual_boxplots(df, cond_colors, "Log-relative normalized")
+      p1 <- if (length(individual_plots)) individual_plots[[1]] else NULL
     } else if (plot_method == "3") {
       # Heatmap with properly named annotation colors aligned to columns
       annot_vec <- setNames(setupinfo$Condition, rownames(setupinfo))[colnames(df1)]
@@ -196,8 +198,8 @@ edger_summary <- function(
       
       p3 <- ComplexHeatmap::Heatmap(
         df1, name = "Z",
-        show_row_names = TRUE,  row_names_gp = grid::gpar(fontsize = 7),
-        show_column_names = TRUE, column_names_gp = grid::gpar(fontsize = 7),
+        show_row_names = isTRUE(show_plot_labels),  row_names_gp = grid::gpar(fontsize = 7),
+        show_column_names = isTRUE(show_plot_labels), column_names_gp = grid::gpar(fontsize = 7),
         show_row_dend = TRUE, show_column_dend = FALSE, cluster_columns = FALSE,
         top_annotation = ha, col = hm_cols
       )
@@ -210,6 +212,7 @@ edger_summary <- function(
     edger_result_significant = if (exists("res_tax_sig")) res_tax_sig else NULL,
     edger_result_table       = res_tax,
     total_counts             = parent_seq_count,
-    plot                     = p1
+    plot                     = p1,
+    individual_plots         = individual_plots
   ))
 }

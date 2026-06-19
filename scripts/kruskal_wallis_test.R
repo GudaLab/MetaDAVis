@@ -6,10 +6,14 @@ library("RColorBrewer")
 library("ComplexHeatmap")
 library("ggplotify")
 library("circlize")
+source("scripts/differential_plot_helpers.R")
 
 kruskal_wallis_test_summary <- function(
     OTU_input, group_index, index_pvalue, ad_hoc, plot_method, alpha,
     kruskal_wallis_test_color_palette,
+    show_plot_labels = TRUE,
+    plot_top_n = 25,
+    plot_taxa_mode = "all",
     show_head = TRUE, head_n = 5, show_colors = TRUE
 ){
   log_head <- function(x, label){
@@ -129,14 +133,15 @@ kruskal_wallis_test_summary <- function(
   df1 <- NULL
   if (nrow(res_tax_sig) >= 1) {
     res_tax$Significant <- ifelse(rownames(res_tax) %in% rownames(res_tax_sig), "Yes", "No")
+    plot_taxa <- differential_plot_taxa(res_tax_sig, plot_top_n, plot_taxa_mode)
     
     # z-scored matrix for heatmap
-    OTU_input2 <- OTU_input1[rownames(OTU_input1) %in% rownames(res_tax_sig), , drop = FALSE]
+    OTU_input2 <- OTU_input1[rownames(OTU_input1) %in% plot_taxa, , drop = FALSE]
     df1 <- scale(OTU_input2)
     
     # long frame for box/violin
     data_long <- as.data.frame(t(OTU_input))
-    df <- do.call(rbind, lapply(res_tax[rownames(res_tax_sig), "OTU"], function(i) {
+    df <- do.call(rbind, lapply(res_tax[plot_taxa, "OTU"], function(i) {
       data.frame(
         Value = data_long[, i],
         Condition = group_index,
@@ -158,6 +163,7 @@ kruskal_wallis_test_summary <- function(
   
   # ---------------- Plots ----------------
   p1 <- NULL
+  individual_plots <- list()
   if (nrow(res_tax_sig) >= 1) {
     if (plot_method == "1") {
       p1 <- ggplot(df, aes(x = Taxa1, y = Value, color = Condition)) +
@@ -170,12 +176,8 @@ kruskal_wallis_test_summary <- function(
               axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
         scale_color_manual(values = cond_cols)
     } else if (plot_method == "2") {
-      p1 <- ggplot(df, aes(Condition, Value, colour = Condition)) +
-        ylab("Relative frequency") +
-        geom_boxplot() + geom_jitter(width = 0.2, alpha = 0.7) + theme_bw() +
-        facet_wrap(~ Taxa, scales = "free", ncol = 3) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-        scale_color_manual(values = cond_cols)
+      individual_plots <- differential_individual_boxplots(df, cond_cols, "Relative frequency")
+      p1 <- if (length(individual_plots)) individual_plots[[1]] else NULL
     } else if (plot_method == "3") {
       # Heatmap annotation: align to df1 columns and use NAMED vector for colors
       # Ensure rownames of metadata are sample IDs
@@ -195,8 +197,8 @@ kruskal_wallis_test_summary <- function(
       
       p3 <- ComplexHeatmap::Heatmap(
         df1, name = "Z",
-        show_row_names = TRUE, row_names_gp = grid::gpar(fontsize = 7),
-        show_column_names = TRUE, column_names_gp = grid::gpar(fontsize = 7),
+        show_row_names = isTRUE(show_plot_labels), row_names_gp = grid::gpar(fontsize = 7),
+        show_column_names = isTRUE(show_plot_labels), column_names_gp = grid::gpar(fontsize = 7),
         show_row_dend = TRUE, show_column_dend = FALSE, cluster_columns = FALSE,
         top_annotation = ha, col = hm_cols
       )
@@ -210,6 +212,7 @@ kruskal_wallis_test_summary <- function(
     kruskal_wallis_test_result_table         = res_tax,
     kruskal_wallis_test_relative_frequency   = rel_freq,
     total_counts                             = parent_seq_count,
-    plot                                     = p1
+    plot                                     = p1,
+    individual_plots                         = individual_plots
   ))
 }

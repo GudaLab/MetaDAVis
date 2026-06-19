@@ -5,6 +5,7 @@ library("RColorBrewer")
 library("ComplexHeatmap")
 library("ggplotify")
 library("dplyr")
+source("scripts/differential_plot_helpers.R")
 
 metagenomeseq_summary <- function(
     OTU_input,
@@ -15,6 +16,9 @@ metagenomeseq_summary <- function(
     plot_method,
     alpha,
     metagenomeseq_color_palette,
+    show_plot_labels = TRUE,
+    plot_top_n = 25,
+    plot_taxa_mode = "all",
     show_head = TRUE,
     head_n = 5,
     show_colors = TRUE
@@ -124,13 +128,15 @@ metagenomeseq_summary <- function(
   
   # mark significance
   res_tax$Significant <- ifelse(rownames(res_tax) %in% rownames(res_tax_sig), "Yes", "No")
+  plot_taxa <- differential_plot_taxa(res_tax_sig, plot_top_n, plot_taxa_mode)
+  res_tax$PlotSignificant <- ifelse(rownames(res_tax) %in% plot_taxa, "Yes", "No")
   
   # build plotting table (log-relative normalized values), if significant
   df <- NULL
   df1 <- NULL
   if (nrow(res_tax_sig) >= 1) {
     # scale matrix for heatmap
-    OTU_input_sig <- OTU_input1[rownames(OTU_input1) %in% rownames(res_tax_sig), , drop = FALSE]
+    OTU_input_sig <- OTU_input1[rownames(OTU_input1) %in% plot_taxa, , drop = FALSE]
     df1 <- scale(OTU_input_sig)
     
     # log-relative normalization for box/violin plots
@@ -139,7 +145,7 @@ metagenomeseq_summary <- function(
     data_lr <- as.data.frame(data_lr)
     
     groups <- group_index$Condition
-    for (i in res_tax[rownames(res_tax_sig), "OTU"]) {
+    for (i in res_tax[plot_taxa, "OTU"]) {
       label_col <- if (identical(index_pvalue, "padj")) "FDR" else "PValue"
       tmp <- data.frame(
         Value = data_lr[, i],
@@ -169,6 +175,7 @@ metagenomeseq_summary <- function(
   
   # plots
   p1 <- NULL
+  individual_plots <- list()
   if (nrow(res_tax_sig) >= 1) {
     if (plot_method == "1") {
       p1 <- ggplot(df, aes(x = Taxa1, y = Value, color = Condition)) +
@@ -180,21 +187,20 @@ metagenomeseq_summary <- function(
               axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
         scale_color_manual(values = colors)
     } else if (plot_method == "2") {
-      p1 <- ggplot(df, aes(Condition, Value, colour = Condition)) +
-        ylab("Log-relative normalized") +
-        geom_boxplot() + geom_jitter(width = 0.2, alpha = 0.7) + theme_bw() +
-        facet_wrap(~ Taxa, scales = "free", ncol = 3) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-        scale_color_manual(values = colors)
+      individual_plots <- differential_individual_boxplots(df, colors, "Log-relative normalized")
+      p1 <- if (length(individual_plots)) individual_plots[[1]] else NULL
     } else if (plot_method == "3") {
-      p1 <- ggplot(res_tax, aes(x = All_Mean, y = log2FC, color = Significant)) +
+      p1 <- ggplot(res_tax, aes(x = All_Mean, y = log2FC, color = PlotSignificant)) +
         geom_point(size = 2) +
         scale_x_log10() +
         scale_color_manual(values = c("black", "red")) +
         labs(x = "log10(Mean abundance)", y = "Log2FC") +
-        theme_bw() +
-        geom_text(data = subset(res_tax, Significant == "Yes"),
-                  aes(label = OTU), size = 3.5, vjust = 1)
+        theme_bw()
+
+      if (isTRUE(show_plot_labels)) {
+        p1 <- p1 + geom_text(data = subset(res_tax, PlotSignificant == "Yes"),
+                             aes(label = OTU), size = 3.5, vjust = 1)
+      }
     } else if (plot_method == "4") {
       # Align annotation vector to the heatmap columns
       annot_vec <- setNames(group_index$Condition, group_index$Samples)[colnames(df1)]
@@ -215,8 +221,8 @@ metagenomeseq_summary <- function(
       
       p4 <- ComplexHeatmap::Heatmap(
         df1, name = "Z",
-        show_row_names = TRUE,  row_names_gp = grid::gpar(fontsize = 7),
-        show_column_names = TRUE, column_names_gp = grid::gpar(fontsize = 7),
+        show_row_names = isTRUE(show_plot_labels),  row_names_gp = grid::gpar(fontsize = 7),
+        show_column_names = isTRUE(show_plot_labels), column_names_gp = grid::gpar(fontsize = 7),
         show_row_dend = TRUE, show_column_dend = FALSE, cluster_columns = FALSE,
         top_annotation = ha, col = hm_cols
       )
@@ -238,6 +244,7 @@ metagenomeseq_summary <- function(
     metagenomeseq_result_significant = if (exists("res_tax_sig")) res_tax_sig else NULL,
     metagenomeseq_result_table     = res_tax,
     total_counts                   = parent_seq_count,
-    plot                           = p1
+    plot                           = p1,
+    individual_plots               = individual_plots
   ))
 }

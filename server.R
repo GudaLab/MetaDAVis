@@ -245,7 +245,7 @@ server <- function(input, output, session) {
       menu = "Diversity",
       tab = "Beta",
       task = "Beta diversity analysis",
-      params = c("input_RA_Beta", "select_beta", "adonis_permutations", "adonis_dissimilarities", "select_method", "select_beta_color_palette", "select_image_type_beta")
+      params = c("input_RA_Beta", "select_beta", "adonis_permutations", "adonis_dissimilarities", "select_beta_boxplot_pvalue", "select_beta_pvalue", "select_method", "select_beta_color_palette", "select_image_type_beta")
     ),
     action_pca = list(
       menu = "Dimension reduction",
@@ -293,25 +293,25 @@ server <- function(input, output, session) {
       menu = "Differential abundance",
       tab = "Wilcoxon Rank Sum test",
       task = "Wilcoxon Rank Sum test",
-      params = c("input_wilcoxtest", "group1_wilcoxtest", "group2_wilcoxtest", "select_wilcoxtest_pvalue", "wilcoxtest_pvalue", "wilcox_color_palette", "select_wilcoxtest_plot", "select_image_type_wilcoxtest")
+      params = c("input_wilcoxtest", "group1_wilcoxtest", "group2_wilcoxtest", "select_wilcoxtest_pvalue", "wilcoxtest_pvalue", "wilcox_color_palette", "select_wilcoxtest_plot", "wilcoxtest_plot_taxa_mode", "wilcoxtest_plot_top_n", "show_wilcoxtest_plot_labels", "select_image_type_wilcoxtest")
     ),
     action_ttest = list(
       menu = "Differential abundance",
       tab = "t-test",
       task = "t-test",
-      params = c("input_ttest", "group1_ttest", "group2_ttest", "select_ttest_pvalue", "ttest_pvalue", "ttest_color_palette", "select_ttest_plot", "select_image_type_ttest")
+      params = c("input_ttest", "group1_ttest", "group2_ttest", "select_ttest_pvalue", "ttest_pvalue", "ttest_color_palette", "select_ttest_plot", "ttest_plot_taxa_mode", "ttest_plot_top_n", "show_ttest_plot_labels", "select_image_type_ttest")
     ),
     action_metagenomeseq = list(
       menu = "Differential abundance",
       tab = "metagenomeSeq",
       task = "metagenomeSeq analysis",
-      params = c("input_RA_metagenomeseq", "group1_metagenomeseq", "group2_metagenomeseq", "select_metagenomeseq_pvalue", "metagenomeseq_pvalue", "metagenomeseq_color_palette", "select_metagenomeseq_plot", "select_image_type_metagenomeseq")
+      params = c("input_RA_metagenomeseq", "group1_metagenomeseq", "group2_metagenomeseq", "select_metagenomeseq_pvalue", "metagenomeseq_pvalue", "metagenomeseq_color_palette", "select_metagenomeseq_plot", "metagenomeseq_plot_taxa_mode", "metagenomeseq_plot_top_n", "show_metagenomeseq_plot_labels", "select_image_type_metagenomeseq")
     ),
     action_deseq2 = list(
       menu = "Differential abundance",
       tab = "DESeq2",
       task = "DESeq2 analysis",
-      params = c("input_RA_deseq2", "group1_deseq2", "group2_deseq2", "select_deseq2_pvalue", "deseq2_pvalue", "deseq2_color_palette", "select_deseq2_plot", "select_image_type_deseq2")
+      params = c("input_RA_deseq2", "group1_deseq2", "group2_deseq2", "select_deseq2_pvalue", "deseq2_pvalue", "deseq2_color_palette", "select_deseq2_plot", "deseq2_plot_taxa_mode", "deseq2_plot_top_n", "show_deseq2_plot_labels", "select_image_type_deseq2")
     ),
     action_LEfSe = list(
       menu = "Differential abundance",
@@ -329,25 +329,25 @@ server <- function(input, output, session) {
       menu = "Differential abundance",
       tab = "Limma-Voom",
       task = "Limma-Voom analysis",
-      params = c("input_RA_limma", "group1_limma", "group2_limma", "select_limma_pvalue", "limma_pvalue", "limma_color_palette", "select_limma_plot", "select_image_type_limma")
+      params = c("input_RA_limma", "group1_limma", "group2_limma", "select_limma_pvalue", "limma_pvalue", "limma_color_palette", "select_limma_plot", "limma_plot_taxa_mode", "limma_plot_top_n", "show_limma_plot_labels", "select_image_type_limma")
     ),
     action_edger = list(
       menu = "Differential abundance",
       tab = "edgeR",
       task = "edgeR analysis",
-      params = c("input_RA_edger", "group1_edger", "group2_edger", "select_edger_pvalue", "edger_pvalue", "edger_color_palette", "select_edger_plot", "select_image_type_edger")
+      params = c("input_RA_edger", "group1_edger", "group2_edger", "select_edger_pvalue", "edger_pvalue", "edger_color_palette", "select_edger_plot", "edger_plot_taxa_mode", "edger_plot_top_n", "show_edger_plot_labels", "select_image_type_edger")
     ),
     action_kruskal_wallis_test = list(
       menu = "Differential abundance",
       tab = "Kruskal-Wallis test",
       task = "Kruskal-Wallis test",
-      params = c("input_kruskal_wallis_test", "select_kruskal_wallis_test_pvalue", "kruskal_wallis_test_pvalue", "kruskal_wallis_test_ad_hoc", "kruskal_wallis_test_color_palette", "kruskal_wallis_test_plot", "select_image_type_kruskal_wallis_test")
+      params = c("input_kruskal_wallis_test", "select_kruskal_wallis_test_pvalue", "kruskal_wallis_test_pvalue", "kruskal_wallis_test_ad_hoc", "kruskal_wallis_test_color_palette", "kruskal_wallis_test_plot", "kruskal_wallis_test_plot_taxa_mode", "kruskal_wallis_test_plot_top_n", "show_kruskal_wallis_test_plot_labels", "select_image_type_kruskal_wallis_test")
     ),
     action_anova = list(
       menu = "Differential abundance",
       tab = "ANOVA",
       task = "ANOVA",
-      params = c("input_anova", "select_anova_pvalue", "anova_pvalue", "anova_ad_hoc", "anova_color_palette", "anova_plot", "select_image_type_anova")
+      params = c("input_anova", "select_anova_pvalue", "anova_pvalue", "anova_ad_hoc", "anova_color_palette", "anova_plot", "anova_plot_taxa_mode", "anova_plot_top_n", "show_anova_plot_labels", "select_image_type_anova")
     )
   )
 
@@ -758,7 +758,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_beta_diversity", function() {
       source("scripts/beta_diversity.R")
       labels_data_type<- input$file1$name
-      beta_diversity_boxplot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], select_beta_color_palette=input$select_beta_color_palette, index_method = input$select_beta, plot_method = input$select_method, adonis_dissimilarities = input$adonis_dissimilarities, adonis_permutations = input$adonis_permutations)
+      beta_diversity_boxplot(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[7]], tax_index = dataInput_RA_level()[[8]], select_beta_color_palette=input$select_beta_color_palette, index_method = input$select_beta, plot_method = input$select_method, adonis_dissimilarities = input$adonis_dissimilarities, adonis_permutations = input$adonis_permutations, pvalue = input$select_beta_pvalue, boxplot_pvalue = input$select_beta_boxplot_pvalue)
     })
   })
   
@@ -1214,6 +1214,72 @@ server <- function(input, output, session) {
       update_differential_condition_pair(group1_id, group2_id)
     }, ignoreInit = TRUE)
   }
+
+  differential_plot_pages <- function(result, plot_index) {
+    if (is.null(result) || !length(result)) {
+      return(list())
+    }
+
+    individual_plots <- result[["individual_plots"]]
+    if (is.list(individual_plots) && length(individual_plots)) {
+      return(individual_plots)
+    }
+
+    plot_obj <- if (length(result) >= plot_index) result[[plot_index]] else NULL
+    if (is.null(plot_obj)) {
+      return(list())
+    }
+
+    list("Plot 1" = plot_obj)
+  }
+
+  differential_selected_page <- function(page_input_id, page_count) {
+    page_index <- suppressWarnings(as.integer(input[[page_input_id]]))
+
+    if (length(page_index) == 0 || is.na(page_index[1]) || page_index[1] < 1 || page_index[1] > page_count) {
+      return(1L)
+    }
+
+    page_index[1]
+  }
+
+  differential_selected_plot <- function(result, plot_index, page_input_id) {
+    plot_pages <- differential_plot_pages(result, plot_index)
+    validate(need(length(plot_pages) > 0, "No plot is available."))
+    plot_pages[[differential_selected_page(page_input_id, length(plot_pages))]]
+  }
+
+  differential_individual_plot_page_ui <- function(result, plot_index, page_input_id) {
+    plot_pages <- differential_plot_pages(result, plot_index)
+
+    if (length(plot_pages) <= 1) {
+      return(NULL)
+    }
+
+    plot_names <- names(plot_pages)
+    if (is.null(plot_names) || any(!nzchar(plot_names))) {
+      plot_names <- paste("Plot", seq_along(plot_pages))
+    }
+
+    selectInput(
+      page_input_id,
+      label = "Individual plot image",
+      choices = stats::setNames(seq_along(plot_pages), plot_names),
+      selected = differential_selected_page(page_input_id, length(plot_pages)),
+      width = "360px"
+    )
+  }
+
+  differential_plot_filename <- function(filename_base, extension, result, plot_index, page_input_id) {
+    plot_pages <- differential_plot_pages(result, plot_index)
+    filename <- filename_base
+
+    if (length(plot_pages) > 1) {
+      filename <- paste0(filename, "_page_", sprintf("%02d", differential_selected_page(page_input_id, length(plot_pages))))
+    }
+
+    paste0(filename, default_if_missing(extension, ".jpg"))
+  }
   
   ###########################
   ##      wilcox-test      ##
@@ -1230,7 +1296,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_wilcoxtest", function() {
       source("scripts/wilcoxtest.R")
       labels_data_type<- input$file1$name
-      wilcoxtest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_wilcoxtest_pvalue, group1 = input$group1_wilcoxtest, group2 = input$group2_wilcoxtest,  plot_method = input$select_wilcoxtest_plot, alpha = input$wilcoxtest_pvalue, wilcox_color_palette=input$wilcox_color_palette)
+      wilcoxtest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_wilcoxtest_pvalue, group1 = input$group1_wilcoxtest, group2 = input$group2_wilcoxtest,  plot_method = input$select_wilcoxtest_plot, alpha = input$wilcoxtest_pvalue, wilcox_color_palette=input$wilcox_color_palette, show_plot_labels = input$show_wilcoxtest_plot_labels, plot_top_n = input$wilcoxtest_plot_top_n, plot_taxa_mode = input$wilcoxtest_plot_taxa_mode)
     })
   })
   
@@ -1271,16 +1337,20 @@ server <- function(input, output, session) {
   
 
   output$boxplot_wilcoxtest <- renderPlot({
-    data_wilcoxtest()[6]
+    differential_selected_plot(data_wilcoxtest(), 6, "wilcoxtest_individual_plot_page")
+  })
+
+  output$wilcoxtest_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_wilcoxtest(), 6, "wilcoxtest_individual_plot_page")
   })
   
   
   output$download_Boxplot_wilcoxtest<- downloadHandler(
     filename = function(){
-      paste("wilcoxtest_plot", input$select_image_type_wilcoxtest, sep="")
+      differential_plot_filename("wilcoxtest_plot", input$select_image_type_wilcoxtest, data_wilcoxtest(), 6, "wilcoxtest_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_wilcoxtest()[[6]], width = input$Boxplot_wilcoxtest_output_width, height = input$Boxplot_wilcoxtest_output_height, dpi = input$Boxplot_wilcoxtest_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_wilcoxtest(), 6, "wilcoxtest_individual_plot_page"), width = input$Boxplot_wilcoxtest_output_width, height = input$Boxplot_wilcoxtest_output_height, dpi = input$Boxplot_wilcoxtest_output_dpi, units = "in")
     }
   )    
   
@@ -1301,7 +1371,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_ttest", function() {
       source("scripts/ttest.R")
       labels_data_type<- input$file1$name
-      ttest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_ttest_pvalue, group1 = input$group1_ttest, group2 = input$group2_ttest,  plot_method = input$select_ttest_plot, alpha = input$ttest_pvalue, ttest_color_palette = input$ttest_color_palette)
+      ttest_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_ttest_pvalue, group1 = input$group1_ttest, group2 = input$group2_ttest,  plot_method = input$select_ttest_plot, alpha = input$ttest_pvalue, ttest_color_palette = input$ttest_color_palette, show_plot_labels = input$show_ttest_plot_labels, plot_top_n = input$ttest_plot_top_n, plot_taxa_mode = input$ttest_plot_taxa_mode)
     })
   })
   
@@ -1342,16 +1412,20 @@ server <- function(input, output, session) {
   
 
   output$boxplot_ttest <- renderPlot({
-    data_ttest()[6]
+    differential_selected_plot(data_ttest(), 6, "ttest_individual_plot_page")
+  })
+
+  output$ttest_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_ttest(), 6, "ttest_individual_plot_page")
   })
   
   
   output$download_Boxplot_ttest<- downloadHandler(
     filename = function(){
-      paste("ttest_plot", input$select_image_type_ttest, sep="")
+      differential_plot_filename("ttest_plot", input$select_image_type_ttest, data_ttest(), 6, "ttest_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_ttest()[[6]], width = input$Boxplot_ttest_output_width, height = input$Boxplot_ttest_output_height, dpi = input$Boxplot_ttest_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_ttest(), 6, "ttest_individual_plot_page"), width = input$Boxplot_ttest_output_width, height = input$Boxplot_ttest_output_height, dpi = input$Boxplot_ttest_output_dpi, units = "in")
     }
   )    
   
@@ -1372,7 +1446,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_metagenomeseq", function() {
       source("scripts/metagenomeseq.R")
       labels_data_type<- input$file1$name
-      metagenomeseq_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_metagenomeseq_pvalue, group1 = input$group1_metagenomeseq, group2 = input$group2_metagenomeseq,  plot_method = input$select_metagenomeseq_plot, alpha = input$metagenomeseq_pvalue, metagenomeseq_color_palette = input$metagenomeseq_color_palette)
+      metagenomeseq_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_metagenomeseq_pvalue, group1 = input$group1_metagenomeseq, group2 = input$group2_metagenomeseq,  plot_method = input$select_metagenomeseq_plot, alpha = input$metagenomeseq_pvalue, metagenomeseq_color_palette = input$metagenomeseq_color_palette, show_plot_labels = input$show_metagenomeseq_plot_labels, plot_top_n = input$metagenomeseq_plot_top_n, plot_taxa_mode = input$metagenomeseq_plot_taxa_mode)
     })
   })
   
@@ -1405,16 +1479,20 @@ server <- function(input, output, session) {
   )
   
   output$boxplot_metagenomeseq <- renderPlot({
-    data_metagenomeseq()[5]
+    differential_selected_plot(data_metagenomeseq(), 5, "metagenomeseq_individual_plot_page")
+  })
+
+  output$metagenomeseq_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_metagenomeseq(), 5, "metagenomeseq_individual_plot_page")
   })
   
   
   output$download_Boxplot_metagenomeseq<- downloadHandler(
     filename = function(){
-      paste("metagenomeseq_plot", input$select_image_type_metagenomeseq, sep="")
+      differential_plot_filename("metagenomeseq_plot", input$select_image_type_metagenomeseq, data_metagenomeseq(), 5, "metagenomeseq_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_metagenomeseq()[[5]], width = input$Boxplot_metagenomeseq_output_width, height = input$Boxplot_metagenomeseq_output_height, dpi = input$Boxplot_metagenomeseq_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_metagenomeseq(), 5, "metagenomeseq_individual_plot_page"), width = input$Boxplot_metagenomeseq_output_width, height = input$Boxplot_metagenomeseq_output_height, dpi = input$Boxplot_metagenomeseq_output_dpi, units = "in")
     }
   )    
   
@@ -1437,7 +1515,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_deseq2", function() {
       source("scripts/deseq2.R")
       labels_data_type<- input$file1$name
-      deseq2_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_deseq2_pvalue, group1 = input$group1_deseq2, group2 = input$group2_deseq2,  plot_method = input$select_deseq2_plot, alpha = input$deseq2_pvalue, deseq2_color_palette = input$deseq2_color_palette)
+      deseq2_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_deseq2_pvalue, group1 = input$group1_deseq2, group2 = input$group2_deseq2,  plot_method = input$select_deseq2_plot, alpha = input$deseq2_pvalue, deseq2_color_palette = input$deseq2_color_palette, show_plot_labels = input$show_deseq2_plot_labels, plot_top_n = input$deseq2_plot_top_n, plot_taxa_mode = input$deseq2_plot_taxa_mode)
     })
   })
   
@@ -1476,16 +1554,20 @@ server <- function(input, output, session) {
     }
   )
   output$boxplot_deseq2 <- renderPlot({
-    data_deseq2()[6]
+    differential_selected_plot(data_deseq2(), 6, "deseq2_individual_plot_page")
+  })
+
+  output$deseq2_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_deseq2(), 6, "deseq2_individual_plot_page")
   })
   
   
   output$download_Boxplot_deseq2<- downloadHandler(
     filename = function(){
-      paste("deseq2_plot", input$select_image_type_deseq2, sep="")
+      differential_plot_filename("deseq2_plot", input$select_image_type_deseq2, data_deseq2(), 6, "deseq2_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_deseq2()[[6]], width = input$Boxplot_deseq2_output_width, height = input$Boxplot_deseq2_output_height, dpi = input$Boxplot_deseq2_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_deseq2(), 6, "deseq2_individual_plot_page"), width = input$Boxplot_deseq2_output_width, height = input$Boxplot_deseq2_output_height, dpi = input$Boxplot_deseq2_output_dpi, units = "in")
     }
   )    
   
@@ -1620,7 +1702,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_limma", function() {
       source("scripts/limma.R")
       labels_data_type<- input$file1$name
-      limma_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_limma_pvalue, group1 = input$group1_limma, group2 = input$group2_limma,  plot_method = input$select_limma_plot, alpha = input$limma_pvalue, limma_color_palette = input$limma_color_palette)
+      limma_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_limma_pvalue, group1 = input$group1_limma, group2 = input$group2_limma,  plot_method = input$select_limma_plot, alpha = input$limma_pvalue, limma_color_palette = input$limma_color_palette, show_plot_labels = input$show_limma_plot_labels, plot_top_n = input$limma_plot_top_n, plot_taxa_mode = input$limma_plot_taxa_mode)
     })
   })
   
@@ -1654,16 +1736,20 @@ server <- function(input, output, session) {
  
   
   output$boxplot_limma <- renderPlot({
-    data_limma()[5]
+    differential_selected_plot(data_limma(), 5, "limma_individual_plot_page")
+  })
+
+  output$limma_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_limma(), 5, "limma_individual_plot_page")
   })
   
   
   output$download_Boxplot_limma<- downloadHandler(
     filename = function(){
-      paste("limma_plot", input$select_image_type_limma, sep="")
+      differential_plot_filename("limma_plot", input$select_image_type_limma, data_limma(), 5, "limma_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_limma()[[5]], width = input$Boxplot_limma_output_width, height = input$Boxplot_limma_output_height, dpi = input$Boxplot_limma_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_limma(), 5, "limma_individual_plot_page"), width = input$Boxplot_limma_output_width, height = input$Boxplot_limma_output_height, dpi = input$Boxplot_limma_output_dpi, units = "in")
     }
   )    
   
@@ -1686,7 +1772,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_edger", function() {
       source("scripts/edger.R")
       labels_data_type<- input$file1$name
-      edger_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_edger_pvalue, group1 = input$group1_edger, group2 = input$group2_edger, plot_method = input$select_edger_plot, alpha = input$edger_pvalue, edger_color_palette = input$edger_color_palette)
+      edger_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_edger_pvalue, group1 = input$group1_edger, group2 = input$group2_edger, plot_method = input$select_edger_plot, alpha = input$edger_pvalue, edger_color_palette = input$edger_color_palette, show_plot_labels = input$show_edger_plot_labels, plot_top_n = input$edger_plot_top_n, plot_taxa_mode = input$edger_plot_taxa_mode)
     })
   })
   
@@ -1720,16 +1806,20 @@ server <- function(input, output, session) {
   
  
   output$boxplot_edger <- renderPlot({
-    data_edger()[5]
+    differential_selected_plot(data_edger(), 5, "edger_individual_plot_page")
+  })
+
+  output$edger_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_edger(), 5, "edger_individual_plot_page")
   })
   
   
   output$download_Boxplot_edger<- downloadHandler(
     filename = function(){
-      paste("edger_plot", input$select_image_type_edger, sep="")
+      differential_plot_filename("edger_plot", input$select_image_type_edger, data_edger(), 5, "edger_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_edger()[[5]], width = input$Boxplot_edger_output_width, height = input$Boxplot_edger_output_height, dpi = input$Boxplot_edger_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_edger(), 5, "edger_individual_plot_page"), width = input$Boxplot_edger_output_width, height = input$Boxplot_edger_output_height, dpi = input$Boxplot_edger_output_dpi, units = "in")
     }
   )   
   
@@ -1746,7 +1836,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_kruskal_wallis_test", function() {
       source("scripts/kruskal_wallis_test.R")
       labels_data_type<- input$file1$name
-      kruskal_wallis_test_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_kruskal_wallis_test_pvalue, ad_hoc = input$kruskal_wallis_test_ad_hoc, plot_method = input$kruskal_wallis_test_plot, alpha = input$kruskal_wallis_test_pvalue, kruskal_wallis_test_color_palette = input$kruskal_wallis_test_color_palette)
+      kruskal_wallis_test_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_kruskal_wallis_test_pvalue, ad_hoc = input$kruskal_wallis_test_ad_hoc, plot_method = input$kruskal_wallis_test_plot, alpha = input$kruskal_wallis_test_pvalue, kruskal_wallis_test_color_palette = input$kruskal_wallis_test_color_palette, show_plot_labels = input$show_kruskal_wallis_test_plot_labels, plot_top_n = input$kruskal_wallis_test_plot_top_n, plot_taxa_mode = input$kruskal_wallis_test_plot_taxa_mode)
     })
   })
   
@@ -1786,16 +1876,20 @@ server <- function(input, output, session) {
   )
   
    output$boxplot_kruskal_wallis_test <- renderPlot({
-    data_kruskal_wallis_test()[6]
+    differential_selected_plot(data_kruskal_wallis_test(), 6, "kruskal_wallis_test_individual_plot_page")
+  })
+
+  output$kruskal_wallis_test_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_kruskal_wallis_test(), 6, "kruskal_wallis_test_individual_plot_page")
   })
   
   
   output$download_Boxplot_kruskal_wallis_test<- downloadHandler(
     filename = function(){
-      paste("kruskal_wallis_test_plot", input$select_image_type_kruskal_wallis_test, sep="")
+      differential_plot_filename("kruskal_wallis_test_plot", input$select_image_type_kruskal_wallis_test, data_kruskal_wallis_test(), 6, "kruskal_wallis_test_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_kruskal_wallis_test()[[6]], width = input$Boxplot_kruskal_wallis_test_output_width, height = input$Boxplot_kruskal_wallis_test_output_height, dpi = input$Boxplot_kruskal_wallis_test_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_kruskal_wallis_test(), 6, "kruskal_wallis_test_individual_plot_page"), width = input$Boxplot_kruskal_wallis_test_output_width, height = input$Boxplot_kruskal_wallis_test_output_height, dpi = input$Boxplot_kruskal_wallis_test_output_dpi, units = "in")
     }
   ) 
   
@@ -1812,7 +1906,7 @@ server <- function(input, output, session) {
     run_with_tracking("action_anova", function() {
       source("scripts/anova.R")
       labels_data_type<- input$file1$name
-      anova_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_anova_pvalue, ad_hoc = input$anova_ad_hoc, plot_method = input$anova_plot, alpha = input$anova_pvalue, anova_color_palette = input$anova_color_palette)
+      anova_summary(OTU_input = dataInput_RA_level()[[4]], group_index = dataInput_RA_level()[[9]], index_pvalue = input$select_anova_pvalue, ad_hoc = input$anova_ad_hoc, plot_method = input$anova_plot, alpha = input$anova_pvalue, anova_color_palette = input$anova_color_palette, show_plot_labels = input$show_anova_plot_labels, plot_top_n = input$anova_plot_top_n, plot_taxa_mode = input$anova_plot_taxa_mode)
     })
   })
   
@@ -1853,16 +1947,20 @@ server <- function(input, output, session) {
   
   
   output$boxplot_anova <- renderPlot({
-    data_anova()[6]
+    differential_selected_plot(data_anova(), 6, "anova_individual_plot_page")
+  })
+
+  output$anova_individual_plot_page_ui <- renderUI({
+    differential_individual_plot_page_ui(data_anova(), 6, "anova_individual_plot_page")
   })
   
   
   output$download_Boxplot_anova<- downloadHandler(
     filename = function(){
-      paste("anova_plot", input$select_image_type_anova, sep="")
+      differential_plot_filename("anova_plot", input$select_image_type_anova, data_anova(), 6, "anova_individual_plot_page")
     },
     content = function(file){
-      ggsave(file,plot = data_anova()[[6]], width = input$Boxplot_anova_output_width, height = input$Boxplot_anova_output_height, dpi = input$Boxplot_anova_output_dpi, units = "in")
+      ggsave(file,plot = differential_selected_plot(data_anova(), 6, "anova_individual_plot_page"), width = input$Boxplot_anova_output_width, height = input$Boxplot_anova_output_height, dpi = input$Boxplot_anova_output_dpi, units = "in")
     }
   )    
 
@@ -1896,6 +1994,19 @@ server <- function(input, output, session) {
       path = path,
       filename_base = as_bulk_fun(filename_base),
       plot = plot,
+      width = as_bulk_fun(width),
+      height = as_bulk_fun(height),
+      dpi = as_bulk_fun(dpi)
+    )
+  }
+
+  bulk_plot_pages_item <- function(action, path, filename_base, plots, width, height, dpi) {
+    list(
+      type = "plot_pages",
+      action = action,
+      path = path,
+      filename_base = as_bulk_fun(filename_base),
+      plots = plots,
       width = as_bulk_fun(width),
       height = as_bulk_fun(height),
       dpi = as_bulk_fun(dpi)
@@ -2240,6 +2351,44 @@ server <- function(input, output, session) {
       return(character(0))
     }
 
+    if (identical(item$type, "plot_pages")) {
+      plot_pages <- item$plots()
+
+      if (inherits(plot_pages, "ggplot")) {
+        plot_pages <- list(plot_pages)
+      }
+
+      if (!is.list(plot_pages) || !length(plot_pages)) {
+        stop("No plot pages are available.")
+      }
+
+      plot_dims <- list(
+        width = clamp_numeric(item$width(), 4, 50),
+        height = clamp_numeric(item$height(), 4, 50),
+        dpi = safe_numeric_input(item$dpi(), 300)
+      )
+
+      for (page_index in seq_along(plot_pages)) {
+        filename_suffix <- if (length(plot_pages) > 1) {
+          paste0("_page_", sprintf("%02d", page_index))
+        } else {
+          ""
+        }
+
+        output_file <- bulk_path(root, item$path, paste0(item$filename_base(), filename_suffix, image_ext))
+        ggsave(
+          output_file,
+          plot = plot_pages[[page_index]],
+          width = plot_dims$width,
+          height = plot_dims$height,
+          dpi = plot_dims$dpi,
+          units = "in"
+        )
+      }
+
+      return(character(0))
+    }
+
     if (identical(item$type, "plotly")) {
       plotly_format <- switch(
         tolower(image_ext),
@@ -2422,24 +2571,24 @@ server <- function(input, output, session) {
       bulk_table_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Summary Table"), "wilcoxtest_result_all.csv", function() data_wilcoxtest()[[3]], row_names = FALSE),
       bulk_table_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Summary Table"), "wilcoxtest_relative_frequency.csv", function() data_wilcoxtest()[[4]], row_names = TRUE),
       bulk_table_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Summary Table"), "total_counts_in_each_samples.csv", function() data_wilcoxtest()[[5]], row_names = FALSE),
-      bulk_plot_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Plot"), "wilcoxtest_plot", function() data_wilcoxtest()[[6]], function() input$Boxplot_wilcoxtest_output_width, function() input$Boxplot_wilcoxtest_output_height, function() input$Boxplot_wilcoxtest_output_dpi),
+      bulk_plot_pages_item("action_wilcoxtest", c("Differential abundance", "Wilcoxon Rank Sum test", "Plot"), "wilcoxtest_plot", function() differential_plot_pages(data_wilcoxtest(), 6), function() input$Boxplot_wilcoxtest_output_width, function() input$Boxplot_wilcoxtest_output_height, function() input$Boxplot_wilcoxtest_output_dpi),
 
       bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "ttest_result_significant.csv", function() data_ttest()[[2]], row_names = FALSE),
       bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "ttest_result_all.csv", function() data_ttest()[[3]], row_names = FALSE),
       bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "ttest_relative_frequency.csv", function() data_ttest()[[4]], row_names = TRUE),
       bulk_table_item("action_ttest", c("Differential abundance", "t-test", "Summary Table"), "total_counts_in_each_samples.csv", function() data_ttest()[[5]], row_names = FALSE),
-      bulk_plot_item("action_ttest", c("Differential abundance", "t-test", "Plot"), "ttest_plot", function() data_ttest()[[6]], function() input$Boxplot_ttest_output_width, function() input$Boxplot_ttest_output_height, function() input$Boxplot_ttest_output_dpi),
+      bulk_plot_pages_item("action_ttest", c("Differential abundance", "t-test", "Plot"), "ttest_plot", function() differential_plot_pages(data_ttest(), 6), function() input$Boxplot_ttest_output_width, function() input$Boxplot_ttest_output_height, function() input$Boxplot_ttest_output_dpi),
 
       bulk_table_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Summary Table"), "metagenomeseq_result_significant.csv", function() data_metagenomeseq()[[2]], row_names = FALSE),
       bulk_table_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Summary Table"), "metagenomeseq_result_all.csv", function() data_metagenomeseq()[[3]], row_names = FALSE),
       bulk_table_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Summary Table"), "total_counts_in_each_samples.csv", function() data_metagenomeseq()[[4]], row_names = FALSE),
-      bulk_plot_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Plot"), "metagenomeseq_plot", function() data_metagenomeseq()[[5]], function() input$Boxplot_metagenomeseq_output_width, function() input$Boxplot_metagenomeseq_output_height, function() input$Boxplot_metagenomeseq_output_dpi),
+      bulk_plot_pages_item("action_metagenomeseq", c("Differential abundance", "metagenomeSeq", "Plot"), "metagenomeseq_plot", function() differential_plot_pages(data_metagenomeseq(), 5), function() input$Boxplot_metagenomeseq_output_width, function() input$Boxplot_metagenomeseq_output_height, function() input$Boxplot_metagenomeseq_output_dpi),
 
       bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "deseq2_result_significant.csv", function() data_deseq2()[[2]], row_names = FALSE),
       bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "deseq2_result_all.csv", function() data_deseq2()[[3]], row_names = FALSE),
       bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "deseq2_normalized_count.csv", function() data_deseq2()[[4]], row_names = TRUE),
       bulk_table_item("action_deseq2", c("Differential abundance", "DESeq2", "Summary Table"), "total_counts_in_each_samples.csv", function() data_deseq2()[[5]], row_names = FALSE),
-      bulk_plot_item("action_deseq2", c("Differential abundance", "DESeq2", "Plot"), "deseq2_plot", function() data_deseq2()[[6]], function() input$Boxplot_deseq2_output_width, function() input$Boxplot_deseq2_output_height, function() input$Boxplot_deseq2_output_dpi),
+      bulk_plot_pages_item("action_deseq2", c("Differential abundance", "DESeq2", "Plot"), "deseq2_plot", function() differential_plot_pages(data_deseq2(), 6), function() input$Boxplot_deseq2_output_width, function() input$Boxplot_deseq2_output_height, function() input$Boxplot_deseq2_output_dpi),
 
       bulk_table_item("action_LEfSe", c("Differential abundance", "LEfSe", "Summary Table"), "LEfSe_result_significant.csv", function() data_LEfSe()[[2]], row_names = FALSE),
       bulk_table_item("action_LEfSe", c("Differential abundance", "LEfSe", "Summary Table"), "total_counts_in_each_samples.csv", function() data_LEfSe()[[3]], row_names = FALSE),
@@ -2450,24 +2599,24 @@ server <- function(input, output, session) {
       bulk_table_item("action_limma", c("Differential abundance", "Limma-Voom", "Summary Table"), "limma_result_significant.csv", function() data_limma()[[2]], row_names = FALSE),
       bulk_table_item("action_limma", c("Differential abundance", "Limma-Voom", "Summary Table"), "limma_result_all.csv", function() data_limma()[[3]], row_names = FALSE),
       bulk_table_item("action_limma", c("Differential abundance", "Limma-Voom", "Summary Table"), "total_counts_in_each_samples.csv", function() data_limma()[[4]], row_names = FALSE),
-      bulk_plot_item("action_limma", c("Differential abundance", "Limma-Voom", "Plot"), "limma_plot", function() data_limma()[[5]], function() input$Boxplot_limma_output_width, function() input$Boxplot_limma_output_height, function() input$Boxplot_limma_output_dpi),
+      bulk_plot_pages_item("action_limma", c("Differential abundance", "Limma-Voom", "Plot"), "limma_plot", function() differential_plot_pages(data_limma(), 5), function() input$Boxplot_limma_output_width, function() input$Boxplot_limma_output_height, function() input$Boxplot_limma_output_dpi),
 
       bulk_table_item("action_edger", c("Differential abundance", "edgeR", "Summary Table"), "edger_result_significant.csv", function() data_edger()[[2]], row_names = FALSE),
       bulk_table_item("action_edger", c("Differential abundance", "edgeR", "Summary Table"), "edger_result_all.csv", function() data_edger()[[3]], row_names = FALSE),
       bulk_table_item("action_edger", c("Differential abundance", "edgeR", "Summary Table"), "total_counts_in_each_samples.csv", function() data_edger()[[4]], row_names = FALSE),
-      bulk_plot_item("action_edger", c("Differential abundance", "edgeR", "Plot"), "edger_plot", function() data_edger()[[5]], function() input$Boxplot_edger_output_width, function() input$Boxplot_edger_output_height, function() input$Boxplot_edger_output_dpi),
+      bulk_plot_pages_item("action_edger", c("Differential abundance", "edgeR", "Plot"), "edger_plot", function() differential_plot_pages(data_edger(), 5), function() input$Boxplot_edger_output_width, function() input$Boxplot_edger_output_height, function() input$Boxplot_edger_output_dpi),
 
       bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "kruskal_wallis_test_result_significant.csv", function() data_kruskal_wallis_test()[[2]], row_names = FALSE),
       bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "kruskal_wallis_test_result_all.csv", function() data_kruskal_wallis_test()[[3]], row_names = FALSE),
       bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "kruskal_wallis_test_relative_frequency.csv", function() data_kruskal_wallis_test()[[4]], row_names = TRUE),
       bulk_table_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Summary Table"), "total_counts_in_each_samples.csv", function() data_kruskal_wallis_test()[[5]], row_names = FALSE),
-      bulk_plot_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Plot"), "kruskal_wallis_test_plot", function() data_kruskal_wallis_test()[[6]], function() input$Boxplot_kruskal_wallis_test_output_width, function() input$Boxplot_kruskal_wallis_test_output_height, function() input$Boxplot_kruskal_wallis_test_output_dpi),
+      bulk_plot_pages_item("action_kruskal_wallis_test", c("Differential abundance", "Kruskal-Wallis test", "Plot"), "kruskal_wallis_test_plot", function() differential_plot_pages(data_kruskal_wallis_test(), 6), function() input$Boxplot_kruskal_wallis_test_output_width, function() input$Boxplot_kruskal_wallis_test_output_height, function() input$Boxplot_kruskal_wallis_test_output_dpi),
 
       bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "anova_result_significant.csv", function() data_anova()[[2]], row_names = FALSE),
       bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "anova_result_all.csv", function() data_anova()[[3]], row_names = FALSE),
       bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "anova_relative_frequency.csv", function() data_anova()[[4]], row_names = TRUE),
       bulk_table_item("action_anova", c("Differential abundance", "ANOVA", "Summary Table"), "total_counts_in_each_samples.csv", function() data_anova()[[5]], row_names = FALSE),
-      bulk_plot_item("action_anova", c("Differential abundance", "ANOVA", "Plot"), "anova_plot", function() data_anova()[[6]], function() input$Boxplot_anova_output_width, function() input$Boxplot_anova_output_height, function() input$Boxplot_anova_output_dpi)
+      bulk_plot_pages_item("action_anova", c("Differential abundance", "ANOVA", "Plot"), "anova_plot", function() differential_plot_pages(data_anova(), 6), function() input$Boxplot_anova_output_width, function() input$Boxplot_anova_output_height, function() input$Boxplot_anova_output_dpi)
     )
   }
 

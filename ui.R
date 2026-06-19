@@ -192,7 +192,7 @@ shinyUI(
           <li>Diversity analysis</li>
             <ul>
             <li>Alpha: Seven different methods was used from the phyloseq package. The results were displayed in a box and violin plot with a summary table.</li>
-            <li>Beta: A total of 42 different diversity metrics were integrated from the phyloseq (unlist(distanceMethodList)) package with six selection methods. Results are visualized by bar and ordination with a summary table.</li>
+            <li>Beta: A total of 42 different diversity metrics were integrated from the phyloseq (unlist(distanceMethodList)) package with six selection methods. Results are visualized by bar and ordination with a summary table. Boxplot Wilcoxon p-values and the PERMANOVA p-value can be shown on the plot.</li>
             </ul>
           <li>Dimension reduction</li>
             <ul>
@@ -208,12 +208,13 @@ shinyUI(
           <li>Heatmap: It was integrated with the ComplexHeatmap package. Display heatmap with and without row and column dendrograms and names.</li>
           <li>Differential abundance</li>
             <ul>
-            <li>Two groups: Six different analyses were provided using the Wilcoxon Rank Sum test, t-test, metagenomeSeq, DESeq2, Limma-Voom, edgeR, LEfSe, MaAsLin3. These will perform statistical analysis and generate plots and summary tables based on the significant taxa.</li>
+            <li>Two groups: Eight different analyses were provided using the Wilcoxon Rank Sum test, t-test, metagenomeSeq, DESeq2, Limma-Voom, edgeR, LEfSe, and MaAsLin3. Fold-change results are interpreted as condition2/condition1, and the condition selected in condition1 is removed from the condition2 choices.</li>
+            <li>Individual box plots in differential analysis display up to 25 significant taxa per image using a 5 column by 5 row layout. When more than 25 significant taxa are available, each plot image can be selected and downloaded separately.</li>
             <li>Multiple groups comparison: Two different analyses, such as Kruskal-Wallis test and ANOVA was used for more than multiple group comparisons. These will perform statistical analysis and generate plots and summary tables based on the significant taxa.</li>
             </ul>
           <li>Bulk download</li>
             <ul>
-            <li>The Bulk Download menu exports all completed analysis images and tables in one structured ZIP folder. The Completed Outputs panel lists the analyses that will be included, users can choose JPG, PNG, TIFF, PDF, SVG, BMP, EPS, or PS for plots, tables are saved as CSV files, MaAsLin3 output ZIP is included when available, sessionInfo.txt is added for reproducibility, and bulkDownload_warnings.txt is added if any completed output cannot be exported.</li>
+            <li>The Bulk Download menu exports all completed analysis images and tables in one structured ZIP folder. The Completed Outputs panel lists the analyses that will be included, users can choose JPG, PNG, TIFF, PDF, SVG, BMP, EPS, or PS for plots, differential individual plot pages are exported as separate image files, tables are saved as CSV files, MaAsLin3 output ZIP is included when available, sessionInfo.txt is added for reproducibility, and bulkDownload_warnings.txt is added if any completed output cannot be exported.</li>
             </ul>
           </ul>
         <p>*It provides publication quality plots in multiple formats and summary tables (.csv format) to visualize, download individually, or export together through Bulk Download.</p>
@@ -463,6 +464,8 @@ tags$head(
                      selectInput("select_beta", label = "Select diversity methods", choices = c("bray"="bray", "manhattan"="manhattan", "jaccard"="jaccard", "euclidean"="euclidean", "canberra"="canberra", "clark"="clark", "kulczynski"="kulczynski", "gower"="gower", "altGower"="altGower", "morisita"="morisita", "horn"="horn", "mountford"="mountford", "raup"="raup", "binomial"="binomial", "chao"="chao", "cao"="cao", "mahalanobis"="mahalanobis", "chisq"="chisq", "chord"="chord", "hellinger"="hellinger", "aitchison"="aitchison", "robust.aitchison"="robust.aitchison"), selected = "bray"),
                      numericInput("adonis_permutations", "Number of permutations", value = 99, min = 1, step = 1),
                      selectInput("adonis_dissimilarities", label = "Square root of dissimilarities", choices = c("Yes" = "TRUE", "No" = "FALSE"), selected = "FALSE"),
+                     radioButtons("select_beta_boxplot_pvalue", label = "Boxplot Wilcoxon test", choices = c("Yes (show's Pvalue)" = "Yes", "No" = "No", "Show *" = "star"), selected = "No"),
+                     radioButtons("select_beta_pvalue", label = "PERMANOVA p-value", choices = c("Yes (show's Pvalue)" = "Yes", "No" = "No", "Show *" = "star"), selected = "No"),
                      selectInput("select_method", "Select ordination based method", choices = c("PCoA" = "PCoA", "NMDS" = "NMDS", "DCA" = "DCA", "RDA" = "RDA", "MDS" = "MDS"), selected = "PCoA"),
                      selectInput("select_beta_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                      selectInput("select_image_type_beta", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
@@ -790,6 +793,12 @@ navbarMenu("Differential abundance",
                  numericInput("wilcoxtest_pvalue","FDR or Pvalue", value = "0.05"),
                  selectInput("wilcox_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_wilcoxtest_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
+                 radioButtons("wilcoxtest_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.wilcoxtest_plot_taxa_mode == 'selected'",
+                   numericInput("wilcoxtest_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_wilcoxtest_plot_labels", "Show volcano/heatmap labels", value = TRUE),
                  selectInput("select_image_type_wilcoxtest", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_wilcoxtest", "Submit"),
                ),
@@ -820,6 +829,7 @@ navbarMenu("Differential abundance",
                      "Plot",
                      h3("Plot"),
                      withSpinner(plotOutput("boxplot_wilcoxtest", width = "100%", height = "800px")),
+                     uiOutput("wilcoxtest_individual_plot_page_ui"),
                      fluidRow(
                        column(3, numericInput("Boxplot_wilcoxtest_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_wilcoxtest_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -843,6 +853,12 @@ navbarMenu("Differential abundance",
                  numericInput("ttest_pvalue","FDR or Pvalue", value = "0.05"),
                  selectInput("ttest_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_ttest_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
+                 radioButtons("ttest_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.ttest_plot_taxa_mode == 'selected'",
+                   numericInput("ttest_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_ttest_plot_labels", "Show volcano/heatmap labels", value = TRUE),
                  selectInput("select_image_type_ttest", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_ttest", "Submit"),
                ),
@@ -873,6 +889,7 @@ navbarMenu("Differential abundance",
                      "Plot",
                      h3("Plot"),
                      withSpinner(plotOutput("boxplot_ttest", width = "100%", height = "800px")),
+                     uiOutput("ttest_individual_plot_page_ui"),
                      fluidRow(
                        column(3, numericInput("Boxplot_ttest_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_ttest_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -896,6 +913,12 @@ navbarMenu("Differential abundance",
                  numericInput("metagenomeseq_pvalue","FDR or Pvalue", value = "0.05"),
                  selectInput("metagenomeseq_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_metagenomeseq_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
+                 radioButtons("metagenomeseq_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.metagenomeseq_plot_taxa_mode == 'selected'",
+                   numericInput("metagenomeseq_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_metagenomeseq_plot_labels", "Show volcano/heatmap labels", value = TRUE),
                  selectInput("select_image_type_metagenomeseq", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_metagenomeseq", "Submit"),
                ),
@@ -924,6 +947,7 @@ navbarMenu("Differential abundance",
                      "Plot",
                      h3("Plot"),
                      withSpinner(plotOutput("boxplot_metagenomeseq", width = "100%", height = "800px")),
+                     uiOutput("metagenomeseq_individual_plot_page_ui"),
                      fluidRow(
                        column(3, numericInput("Boxplot_metagenomeseq_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_metagenomeseq_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -949,6 +973,12 @@ navbarMenu("Differential abundance",
                  numericInput("deseq2_pvalue","FDR or Pvalue", value = "0.05"),
                  selectInput("deseq2_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_deseq2_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
+                 radioButtons("deseq2_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.deseq2_plot_taxa_mode == 'selected'",
+                   numericInput("deseq2_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_deseq2_plot_labels", "Show volcano/heatmap labels", value = TRUE),
                  selectInput("select_image_type_deseq2", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_deseq2", "Submit"),
                ),
@@ -979,6 +1009,7 @@ navbarMenu("Differential abundance",
                      "Plot",
                      h3("Plot"),
                      withSpinner(plotOutput("boxplot_deseq2", width = "100%", height = "800px")),
+                     uiOutput("deseq2_individual_plot_page_ui"),
                      fluidRow(
                        column(3, numericInput("Boxplot_deseq2_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_deseq2_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -1085,6 +1116,12 @@ navbarMenu("Differential abundance",
                  numericInput("limma_pvalue","FDR or Pvalue", value = "0.05"),
                  selectInput("limma_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_limma_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Volcano plot" = 3, "Heatmap" = 4), selected = 1),
+                 radioButtons("limma_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.limma_plot_taxa_mode == 'selected'",
+                   numericInput("limma_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_limma_plot_labels", "Show volcano/heatmap labels", value = TRUE),
                  selectInput("select_image_type_limma", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_limma", "Submit"),
                ),
@@ -1113,6 +1150,7 @@ navbarMenu("Differential abundance",
                      "Plot",
                      h3("Plot"),
                      withSpinner(plotOutput("boxplot_limma", width = "100%", height = "800px")),
+                     uiOutput("limma_individual_plot_page_ui"),
                      fluidRow(
                        column(3, numericInput("Boxplot_limma_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_limma_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -1137,6 +1175,12 @@ navbarMenu("Differential abundance",
                  numericInput("edger_pvalue","FDR or Pvalue", value = "0.05"),
                  selectInput("edger_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("select_edger_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Heatmap" = 3), selected = 1),
+                 radioButtons("edger_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.edger_plot_taxa_mode == 'selected'",
+                   numericInput("edger_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_edger_plot_labels", "Show heatmap labels", value = TRUE),
                  selectInput("select_image_type_edger", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_edger", "Submit"),
                ),
@@ -1165,6 +1209,7 @@ navbarMenu("Differential abundance",
                      "Plot",
                      h3("Plot"),
                      withSpinner(plotOutput("boxplot_edger", width = "100%", height = "800px")),
+                     uiOutput("edger_individual_plot_page_ui"),
                      fluidRow(
                        column(3, numericInput("Boxplot_edger_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_edger_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -1189,6 +1234,12 @@ navbarMenu("Differential abundance",
                  radioButtons("kruskal_wallis_test_ad_hoc", "Post-hoc test", choices = c("Yes" = "Yes", "No" = "No"), selected = "No"),
                  selectInput("kruskal_wallis_test_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("kruskal_wallis_test_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Heatmap" = 3), selected = 1),
+                 radioButtons("kruskal_wallis_test_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.kruskal_wallis_test_plot_taxa_mode == 'selected'",
+                   numericInput("kruskal_wallis_test_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_kruskal_wallis_test_plot_labels", "Show heatmap labels", value = TRUE),
                  selectInput("select_image_type_kruskal_wallis_test", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_kruskal_wallis_test", "Submit"),
                ),
@@ -1219,6 +1270,7 @@ navbarMenu("Differential abundance",
                     "Plot",
                     h3("Plot"),
                     withSpinner(plotOutput("boxplot_kruskal_wallis_test", width = "100%", height = "1500px")),
+                    uiOutput("kruskal_wallis_test_individual_plot_page_ui"),
                     fluidRow(
                       column(3, numericInput("Boxplot_kruskal_wallis_test_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                       column(3, numericInput("Boxplot_kruskal_wallis_test_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
@@ -1241,6 +1293,12 @@ navbarMenu("Differential abundance",
                  radioButtons("anova_ad_hoc", "Post-hoc test", choices = c("Yes" = "Yes", "No" = "No"), selected = "No"),
                  selectInput("anova_color_palette", label = "Colors", choices = list("RdYlBu"="RdYlBu", "RdYlGn"="RdYlGn", "BrBG"="BrBG", "PiYG"="PiYG", "PRGn"="PRGn", "PuOr"="PuOr", "RdBu"="RdBu", "RdGy"="RdGy", "Spectral"="Spectral", "Blues"="Blues", "Reds"="Reds", "Greens"="Greens", "Greys"="Greys", "Oranges"="Oranges", "Accent"="Accent", "Dark2"="Dark2","Paired"="Paired","Pastel1"="Pastel1","Pastel2"="Pastel2","Set1"="Set1","Set2"="Set2","Set3"="Set3"), selected = "RdYlBu"),
                  radioButtons("anova_plot", "Types of plot", choices = c("Grouped box plot" = 1, "Individual box plot" = 2, "Heatmap" = 3), selected = 1),
+                 radioButtons("anova_plot_taxa_mode", "Significant taxa in plot", choices = c("All significant" = "all", "Selected number" = "selected"), selected = "all"),
+                 conditionalPanel(
+                   condition = "input.anova_plot_taxa_mode == 'selected'",
+                   numericInput("anova_plot_top_n", "Number of significant taxa in plot", value = 25, min = 2, max = 100, step = 1)
+                 ),
+                 checkboxInput("show_anova_plot_labels", "Show heatmap labels", value = TRUE),
                  selectInput("select_image_type_anova", label = "Output image format", choices = list("JPG" = ".jpg", "TIFF" =".tiff", "PDF" = ".pdf",  "SVG" = ".svg", "BMP" = ".bmp", "EPS" = ".eps", "PS" = ".ps"), selected = ".jpg"),
                  actionButton("action_anova", "Submit"),
                ),
@@ -1271,6 +1329,7 @@ navbarMenu("Differential abundance",
                      "Plot",
                      h3("Plot"),
                      withSpinner(plotOutput("boxplot_anova", width = "100%", height = "1500px")),
+                     uiOutput("anova_individual_plot_page_ui"),
                      fluidRow(
                        column(3, numericInput("Boxplot_anova_output_height", label = h5("Figure height (upto 49 inces)"), value = 8, width = "300px")),
                        column(3, numericInput("Boxplot_anova_output_width", label = h5("Figure width (upto 49 inces)"), value = 8, width = "300px")),
