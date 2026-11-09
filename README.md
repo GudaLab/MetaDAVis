@@ -206,3 +206,7 @@ MetaDAVis has been tested on:
 ## Citation
 
 Jagadesan S, Guda C (2025) MetaDAVis: An R shiny application for metagenomic data analysis and visualization. PLoS ONE 20(4): e0319949. https://doi.org/10.1371/journal.pone.0319949
+
+## License
+
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE)
